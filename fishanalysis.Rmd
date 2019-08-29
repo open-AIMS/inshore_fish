@@ -1,0 +1,570 @@
+---
+title: "Index"
+author: "Murray Logan"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    collapse: no
+    df_print: paged
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+    css: resources/style.css
+  pdf_document:
+    df_print: default
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    latex_engine: xelatex
+    number_sections: yes
+    toc_depth: 2
+  word_document:
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+output_dir: "docs"
+documentclass: article
+fontsize: 12pt
+mainfont: Arial
+mathfont: LiberationMono
+monofont: DejaVu Sans Mono
+classoption: a4paper
+bibliography: resources/references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+knitr::read_chunk('FISH_main.R')
+knitr::read_chunk('FISH_functions.R')
+knitr::read_chunk('FISH_data.R')
+knitr::read_chunk('FISH_gbm.R')
+```
+
+Preparations
+================
+
+```{r Libraries, results='markdown', eval=TRUE}
+```
+
+<details><summary>Raw fish data</summary>
+```{r readFish, results='markdown', eval=TRUE}
+```
+```{r nameLookup, results='markdown', eval=TRUE}
+```
+```{r AbbreviatedNames, results='markdown', eval=TRUE, cache=TRUE}
+```
+</details>
+
+
+## Response Variables:
+
+| Variable                   | Data field                    | Abbreviation | Distribution   |
+|:---------------------------|:------------------------------|--------------|:---------------|
+| Total density              | `Total.fish.density`          | TFD          | Gaussian (log) |
+| Total species richness     | `Total.fish.species.richness` | TFSR         | Gaussian       |
+| Benthic invertivores       | `BE`                          | BE           | Gaussian (log) |
+| Grazers                    | `GRAZ`                        | GRAZ         | Gaussian (log) |
+| Corallivores               | `COR`                         | COR          | Gaussian (log) |
+| Omnivores                  | `OM`                          | OM           | Gaussian (log) |
+| Planktivores               | `PL`                          | PL           | Gaussian (log) |
+| Carnivores                 | `CA`                          | CA           | Gaussian (log) |
+| Piscivores                 | `PI`                          | PI           | Gaussian (log) |
+| Farmers                    | `FA`                          | FA           | Gaussian (log) |
+| Plectropomus total density | `Plectropomus.total.density`  | PTD          | Gaussian (log) |
+| Plectropomus total biomass | `Plectropomus.total.biomass`  | PTB          | Gaussian (log) |
+| Plectropomus legal density | `Plectropomus.legal.density`  | PLD          | Gaussian (log) |
+| Plectropomus legal biomass | `Plectropomus.legal.biomass`  | PLB          | Gaussian (log) |
+
+### Exploratory data analyses {.tabset .tabset-faded}
+
+```{r EDA.histograms, results='markdown', eval=TRUE}
+```
+```{r EDA.density, results='markdown', eval=TRUE}
+```
+
+#### Total density
+```{r EDA.TFD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Total species richness
+```{r EDA.TFSR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Benthic invertivores
+```{r EDA.BE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Grazers
+```{r EDA.GRAZ, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Corallivores
+```{r EDA.COR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Omnivores
+```{r EDA.OM, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Planktivores
+```{r EDA.PL, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Carnivores
+```{r EDA.CA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Piscivores
+```{r EDA.PI, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Farmers
+```{r EDA.FA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus total density
+```{r EDA.PTD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus total biomass
+```{r EDA.PTB, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus legal density
+```{r EDA.PLD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus legal biomass
+```{r EDA.PLB, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+ 
+
+
+## Predictor Variables:
+
+| Variable                      | Data field                  | Abbreviation |
+|:------------------------------|:----------------------------|:-------------|
+| Region                        | `REGION`                    | REGION       |
+| NTR Pooled                    | `NTR.Pooled`                | NTR.Pooled   |
+| LHC % (live hard coral cover) | `LHC_.`                     | LHC          |
+| SC % (soft coral)             | `SC_.`                      | SC           |
+| MA % (macroalgal cover)       | `MAC_.`                     | MA           |
+| Turf %                        | `Turf_.`                    | TURF         |
+| Unconsolidated %              | `Unconsolidated_.`          | UC           |
+| Benthic richness              | `Benthic.richness`          | BR           |
+| Coral morphological diversity | `Coral_Morph.Diversity`     | CMD          |
+| Slope                         | `slope`                     | SLOPE        |
+| Rugosity                      | `rugosity`                  | RUG          |
+| SCI (structural complexity)   | `SCI`                       | SCI          |
+| Chla                          | `ChlA`                      | CHL          |
+| Kd490                         | `kd490`                     | KD490        |
+| SST mean                      | `SSTmean`                   | SSTMEAN      |
+| SST anom                      | `SSTanom`                   | SSTANOM      |
+| Wave exposure                 | `wave.exposure.index`       | WAVE         |
+| Corrected depth               | `Corrected.depth`           | DEPTH        |
+| Max DHW                       | `maxDHW`                    | DHW          |
+| Cyclone                       | `Cyclone`                   | CYCLONE      |
+| Exposure to primary weeks     | `Exposure.to.primary.weeks` | EXP          |
+|                               |                             |              |
+
+FOR Plectropomus response variables ONLY, add:
+
+| Variable                                                  | Data field     | Abbreviation |
+|:----------------------------------------------------------|:---------------|:-------------|
+| Prey density (for Plectropomus density and legal density) | `Prey.density` | PREY.DENSITY |
+| Prey biomass (for Plectropomus biomass and legal biomass) | `Prey.biomass` | PREY.BIOMASS |
+
+Species-specific analyses: list of species in the attached file. There are two
+lists there: the single-column list is for the initial analysis between
+regions, and the table is for the species lists to use for each region
+individually.
+
+<details><summary>Raw selections data</summary>
+```{r readSelections, results='markdown', eval=TRUE}
+```
+</details>
+
+
+
+### Exploratory data analyses {.tabset .tabset-faded}
+
+#### Total density
+```{r EDA.REGION, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### NTR Polled
+```{r EDA.NTR.Pooled, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### LHC % (live hard coral cover)
+```{r EDA.LHC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SC % (soft coral)
+```{r EDA.SC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### MA % (macroalgal cover)
+```{r EDA.MA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Turf %
+```{r EDA.TURF, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Unconsolidated %
+```{r EDA.UC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Benthic richness
+```{r EDA.BR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Coral morphological diversity
+```{r EDA.CMD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Slope
+```{r EDA.SLOPE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Rugosity
+```{r EDA.RUG, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SCI (structural complexity)
+```{r EDA.SCI, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Chlorophyl-a
+```{r EDA.CHL, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Kd490
+```{r EDA.KD490, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SST mean
+```{r EDA.SSTMEAN, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SST anomoly
+```{r EDA.SSTANOM, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Wave exposure
+```{r EDA.WAVE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Corrected Depth
+```{r EDA.DEPTH, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Max DHW
+```{r EDA.DHW, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Cyclone
+```{r EDA.CYCLONE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Explore to primary water (weeks)
+```{r EDA.EXP, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Prey density (for Plectropomus density and legal density)
+```{r EDA.PREY.DENSITY, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Prey biomass (for Plectropomus density and legal density)
+```{r EDA.PREY.BIOMASS, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+ 
+Results {.tabset .tabset-faded}
+===========
+
+```{r formulas, results='markdown', eval=TRUE}
+```
+
+```{r analysis.list, results='markdown', eval=TRUE}
+```
+
+```{r ABT, results='markdown', eval=FALSE}
+```
+
+ 
+```{r name, results='asis', eval=TRUE}
+load('data/var.lookup.RData')
+resp.lookup = var.lookup %>% filter(Type=='Response') %>% droplevels
+mods = names(formulas)
+for (a in 1:length(analyses)) {
+    resp=names(analyses)[a]
+    cat(paste('## ',resp.lookup$pretty.name[resp.lookup$Abbreviation==resp],' {.tabset .tabset-pills} \n\n'))
+    for (f in 1:length(analyses[[a]]$formulas)) {
+        mod.name = names(analyses[[a]]$formulas)[f]
+        cat(paste('### ',mod.name,'\n\n'))
+        cat(paste0('![](output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.png)\n\n'))
+        ## Now for a tables
+        load(file=paste0('data/stats_',mod.name,'_',resp,'.RData'))
+        pretty.stats(stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+        load(file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
+        pretty.thresholds(thresholds, stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+    }
+}
+```
+
+
+
+
+
+
+
+<!-- ## Total density {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_TFD_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_TFD_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_TFD_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_TFD_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_TFD_ABT_short_in.png) -->
+
+<!-- ## Total species richness {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_TFSR_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_TFSR_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_TFSR_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_TFSR_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_TFSR_ABT_short_in.png) -->
+
+<!-- ## Benthic invertivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_BE_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_BE_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_BE_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_BE_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_BE_ABT_short_in.png) -->
+
+<!-- ## Grazers {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_GRAZ_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_GRAZ_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_GRAZ_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_GRAZ_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_GRAZ_ABT_short_in.png) -->
+
+<!-- ## Corallivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_COR_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_COR_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_COR_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_COR_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_COR_ABT_short_in.png) -->
+
+<!-- ## Omnivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_OM_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_OM_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_OM_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_OM_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_OM_ABT_short_in.png) -->
+
+<!-- ## Planktivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PL_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PL_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PL_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PL_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PL_ABT_short_in.png) -->
+
+<!-- ## Carnivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_CA_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_CA_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_CA_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_CA_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_CA_ABT_short_in.png) -->
+
+<!-- ## Piscivores {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PI_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PI_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PI_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PI_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PI_ABT_short_in.png) -->
+
+<!-- ## Farmers {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_FA_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_FA_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_FA_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_FA_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_FA_ABT_short_in.png) -->
+
+<!-- ## Plectropomus total density {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PTD_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PTD_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PTD_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PTD_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PTD_ABT_short_in.png) -->
+
+<!-- ## Plectropomus total biomass {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PTB_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PTB_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PTB_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PTB_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PTB_ABT_short_in.png) -->
+
+<!-- ## Plectropomus legal density {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PLD_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PLD_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PLD_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PLD_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PLD_ABT_short_in.png) -->
+
+<!-- ## Plectropomus legal biomass {.tabset .tabset-pills} -->
+
+<!-- ### All -->
+<!-- ![](output/figures/data.all.abt.all_PLB_ABT_short_in.png) -->
+
+<!-- ### Palm -->
+<!-- ![](output/figures/data.all.abt.Palm_PLB_ABT_short_in.png) -->
+
+<!-- ### Magnetic -->
+<!-- ![](output/figures/data.all.abt.Magnetic_PLB_ABT_short_in.png) -->
+
+<!-- ### Whitsunday -->
+<!-- ![](output/figures/data.all.abt.Whitsunday_PLB_ABT_short_in.png) -->
+
+<!-- ### Keppel -->
+<!-- ![](output/figures/data.all.abt.Keppel_PLB_ABT_short_in.png) -->
+
