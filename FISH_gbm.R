@@ -31,8 +31,10 @@ for (i in 1:nrow(pred.lookup)) {
 groupings.all = do.call('c',groupings.all)
 groupings.region = do.call('c',groupings.region)
 
-gfun = function(f) {
-    form = attr(terms(formulas[[f]]),'term.labels')
+gfun = function(f, form) {
+    #print(f)
+    #print(form[[f]])
+    form = attr(terms(form[[f]]),'term.labels')
     if (f=='all') return(groupings.all[form])
     else return(groupings.region[form])
 }
@@ -46,7 +48,9 @@ for (i in 1:nrow(resp.lookup)) {
     
     analyses[[resp]] = list('formulas' = lapply(formulas, function(f) update(f, paste0(fun,'(',resp,') ~.'))),
                             'family' = fam)
-    analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, USE.NAMES = TRUE,simplify=FALSE)
+    if (resp %in% c('PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
+    if (resp %in% c('PTB','PLB')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.BIOMASS))
+    analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
 }
 ## ----end
 
@@ -68,7 +72,6 @@ for (a in 1:length(analyses)) {
             fish.sub[, as.character(get_response(analyses[[a]]$formulas[[f]]))] = fish.sub[,as.character(get_response(analyses[[a]]$formulas[[f]]))] + val
         }
         set.seed(123)
-        #if ((analyses[[a]]$formulas[[f]])[[2]][[1]]=='log' & attr(terms(analyses[[a]]$formulas[[f]]), 'response')
         mod = abt(analyses[[a]]$formulas[[f]], data=fish.sub, distribution=analyses[[a]]$family,
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
                   var.monotone=as.vector(MONOTONE))
