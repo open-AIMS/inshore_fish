@@ -48,7 +48,7 @@ for (i in 1:nrow(resp.lookup)) {
     
     analyses[[resp]] = list('formulas' = lapply(formulas, function(f) update(f, paste0(fun,'(',resp,') ~.'))),
                             'family' = fam)
-    if (resp %in% c('PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
+    if (resp %in% c('PI','PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
     if (resp %in% c('PTB','PLB')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.BIOMASS))
     analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
 }
