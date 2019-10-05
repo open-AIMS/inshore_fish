@@ -728,6 +728,7 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
     for (j in 1:length(mod)) {
         r = rbind(r, abt::relative.influence(mod[[j]]))
     }
+    r=r[-which(rowSums(r)==0),]
     r=r %>% as.data.frame %>% mutate_all(function(x) 100*x/rowSums(.))
     rel.imps = apply(r, 2, function(x) c('Mean'=median(x),quantile(x, p=c(0.025,0.25,0.75,0.975)))) %>%
         as.data.frame %>%

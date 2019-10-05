@@ -48,7 +48,7 @@ knitr::read_chunk('FISH_functions.R')
 knitr::read_chunk('FISH_data.R')
 knitr::read_chunk('FISH_gbm.R')
 ```
-
+ 
 Preparations
 ================
 
@@ -323,7 +323,7 @@ for (a in 1:length(analyses)) {
     }
 }
 ```
-
+ 
 
 
 

@@ -56,7 +56,7 @@ names = names[names(names)!=names]
 ## ---- AbbreviatedNames
 ## Create duplicates of the fields that are not already abbreviated
 fish = fish %>%
-    mutate(SSTmean=ifelse(SSTmean=='#N/A',NA,SSTmean)) %>%
+    mutate(SSTmean=ifelse(as.character(SSTmean)=='#N/A',NA,as.numeric(as.character(SSTmean)))) %>%
     mutate_at(as.character(var.lookup$Field.name), list(A=~I)) %>%
     rename(!!! gsub('(.*)','\\1_A',names)) %>%
     mutate(REGION=factor(REGION, levels=c('Palm','Magnetic','Whitsunday','Keppel')))
