@@ -1,0 +1,228 @@
+---
+title: "Inshore fish analysis: Species level"
+author: "Murray Logan"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    collapse: no
+    df_print: paged
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+    css: resources/style.css
+  pdf_document:
+    df_print: default
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    latex_engine: xelatex
+    number_sections: yes
+    toc_depth: 2
+  word_document:
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+output_dir: "docs"
+documentclass: article
+fontsize: 12pt
+mainfont: Arial
+mathfont: LiberationMono
+monofont: DejaVu Sans Mono
+classoption: a4paper
+bibliography: resources/references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+knitr::read_chunk('FISH_main.R')
+knitr::read_chunk('FISH_functions.R')
+knitr::read_chunk('FISH_data.R')
+knitr::read_chunk('FISH_gbm.R')
+```
+ 
+Preparations
+================
+
+```{r Libraries, results='markdown', eval=TRUE}
+```
+
+<details><summary>Raw fish data</summary>
+```{r readFish, results='markdown', eval=TRUE}
+```
+```{r nameLookup, results='markdown', eval=TRUE}
+```
+```{r AbbreviatedNames, results='markdown', eval=TRUE, cache=TRUE}
+```
+</details>
+
+<details><summary>Species lists</summary>
+For each model, Dani has compiled a list of appropriate Species
+```{r readSpeciesList, results='markdown', eval=TRUE}
+```
+For consistency with the functional groups analyses, I will turn this
+list into a list of Species that indicates which location models the 
+species should be involved in.
+
+```{r SpeciesList, results='markdown', eval=TRUE}
+```
+```{r nameLookup.species, results='markdown', eval=TRUE}
+```
+```{r AbbreviatedNamesSpecies, results='markdown', eval=TRUE, cache=TRUE}
+```
+</details>
+
+
+
+<style>
+.tab-content {
+  display: inline-block;
+  margin-top: 40px;
+}
+.tabset-dropdown > .nav-tabs {
+  position: absolute;
+  display: inline-block;
+}
+</style>
+
+
+Exploratory data analysis (Responses) {.tabset .tabset-dropdown}
+===================================================================
+
+<!--ignore the next two chunks-->
+```{r SpeciesEDALoopOld, results='markdown', eval=FALSE,cache=TRUE, echo=FALSE}
+```
+```{r SpeciesEDALoopHTMLOld, results='markdown', eval=FALSE,cache=TRUE, echo=FALSE}
+library(bsselectR)
+plot.list <- paste0(list.files("fishanalysis_species_files/figure-html", full.names = TRUE))
+names(plot.list) <- str_replace_all(plot.list, 
+                                      c("\\.png" = "", 
+                                        "fishanalysis_species_files/figure-html/" = ""))
+
+bsselect(plot.list, type = "img", selected = "eda_abu.spp", 
+         live_search = TRUE, show_tick = TRUE)  
+```
+
+<!--TURN THIS BACK ON - cache and eval-->
+```{r SpeciesEDALoop, results='asis', cache=TRUE, eval=TRUE, fig.width=8, fig.height=4}
+```
+
+#
+
+It is clear that all species counts have a long right tail and a large number of zeros.
+There are no zero-inflated regression tree models as such.  If necessary, we could spilt the 
+analyses up into Presence/Absence (binary) and Poisson (>0) models.
+
+For exploratory data analyses of explanatory (predictor) variables, see [here](fishanalysis.html). 
+
+Results {.tabset .tabset-dropdown}
+==============
+
+```{r formulas, results='markdown', eval=TRUE}
+```
+
+```{r analysis.list.species, results='markdown', eval=TRUE}
+```
+
+```{r ABT.species.HPC, results='markdown', eval=FALSE}
+```
+
+```{r ABT.species.HPC.receive, results='markdown', eval=FALSE}
+```
+
+
+
+
+
+```{r ABTLoop.species, results='asis', eval=TRUE, echo=FALSE}
+
+add_html = function(tab, input_name) {
+    print(input_name)
+    out_name=basename(input_name)
+    print(out_name)
+    tab %>% writeLines(con=input_name)
+    extras = list(rmarkdown::html_dependency_jquery(),
+                  rmarkdown::html_dependency_jqueryui(),
+                  rmarkdown::html_dependency_pagedtable()
+                  )
+    render(input_name,
+           output_format=html_document(extra_dependencies = extras),
+           output_file=out_name)
+    
+    }
+
+cat('\n<form name="change">\n')
+#cat('\n<SELECT NAME="options" ONCHANGE="document.getElementById(\'youriframe\').src = this.options[this.selectedIndex].value">\n')
+cat('\n<SELECT NAME="options">\n')
+#cat('\n<option>Select one</soption>\n')
+load('data/var.lookup.species.RData')
+var.lookup=var.lookup.species
+resp.lookup = var.lookup %>% filter(Type=='Response') %>% droplevels
+mods = names(formulas)
+analyses=analyses.species
+for (a in 1:length(analyses)) {
+    resp=names(analyses)[a]
+    #cat(paste('## ',resp.lookup$pretty.name[resp.lookup$Abbreviation==resp],' {.tabset .tabset-pills} \n\n'))
+    for (f in 1:length(analyses[[a]]$formulas)) {
+        mod.name = names(analyses[[a]]$formulas)[f]
+        if (!file.exists(paste0('output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.png'))) next
+                                        #cat(paste('### ',mod.name,'\n\n'))
+        cat(paste0('\n<option value="',mod.name,'_',resp,'">',resp,' (',mod.name,')</option>\n'))
+        #cat(paste('\n<option value="output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.png", width="800px">',resp,' (',mod.name,')</option>\n'))
+        #cat(paste0('![](output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.png)\n\n'))
+        ## Now for a tables
+        load(file=paste0('data/stats_',mod.name,'_',resp,'.RData'))
+        load(file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
+        add_html(c(pretty.stats(stats, var.lookup) %>% rmarkdown:::paged_table_html(),
+                 pretty.thresholds(thresholds, stats, var.lookup) %>% rmarkdown:::paged_table_html()),
+                 input_name=paste0('output/tables/stats_',mod.name,'_',resp,'.html'))
+        #pretty.stats(stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+        #load(file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
+        #pretty.thresholds(thresholds, stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+    }
+}
+cat('\n</SELECT>\n')
+```
+<div id='figure'></div>
+<iframe id='table' src='output/tables/blank.html' width='800px' height='1200px' frameborder='0'></iframe>
+
+<!-- <div data-pagedtable="false"> -->
+<!--   <script data-pagedtable-source type="application/json"> -->
+<!-- {"columns":[{"label":["Covariate"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["Optimum"],"name":[2],"type":["chr"],"align":["left"]},{"label":["R-sq"],"name":[3],"type":["chr"],"align":["left"]},{"label":["Rel inf"],"name":[4],"type":["chr"],"align":["left"]}],"data":[{"1":"LHC % (live hard coral cover)","2":"80.11 (70.29-84.19)","3":"0.03 (0.01-0.07)","4":"16.93 (13.18-18.36)"},{"1":"Coral morphological diversity","2":"7.71 (7.54-7.77)","3":"0.09 (0.08-0.10)","4":"8.98 (4.27-18.12)"},{"1":"Unconsolidated %","2":"1.63 (0.00-3.36)","3":"0.01 (0.00-0.03)","4":"8.63 (6.73-13.83)"},{"1":"Benthic richness","2":"8.18 (7.98-8.34)","3":"0.06 (0.06-0.07)","4":"7.81 (5.70-9.73)"},{"1":"SST mean","2":"23.72 (23.68-23.96)","3":"0.01 (0.01-0.01)","4":"6.36 (5.46-7.83)"},{"1":"Wave exposure","2":"0.00 (0.00-0.00)","3":"0.01 (0.01-0.01)","4":"6.33 (5.41-9.12)"},{"1":"Chla","2":"0.06 (0.06-0.06)","3":"0.02 (0.02-0.02)","4":"6.30 (2.68-7.37)"},{"1":"Max DHW","2":"0.00 (0.00-0.00)","3":"0.05 (0.00-0.05)","4":"6.23 (3.89-6.97)"},{"1":"SST anom","2":"-0.41 (-0.41--0.41)","3":"0.04 (0.04-0.05)","4":"5.82 (4.70-8.61)"},{"1":"MA % (macroalgal cover)","2":"0.00 (0.00-0.00)","3":"0.02 (0.02-0.02)","4":"4.87 (2.16-7.02)"},{"1":"Kd490","2":"0.05 (0.05-0.05)","3":"0.01 (0.01-0.02)","4":"4.23 (1.56-5.57)"},{"1":"SC % (soft coral)","2":"45.39 (38.12-46.98)","3":"0.01 (0.00-0.01)","4":"4.07 (3.01-4.32)"},{"1":"Turf %","2":"0.00 (0.00-0.00)","3":"0.01 (0.00-0.01)","4":"2.99 (1.86-3.97)"},{"1":"Slope","2":"4.62 (4.33-4.84)","3":"0.00 (0.00-0.00)","4":"2.67 (1.42-3.30)"},{"1":"NTR Pooled","2":"NTR (-)","3":"0.00 (0.00-0.00)","4":"2.32 (1.49-3.82)"},{"1":"Rugosity","2":"4.49 (4.26-4.84)","3":"0.01 (0.00-0.01)","4":"1.33 (0.64-1.90)"},{"1":"SCI (structural complexity)","2":"20.23 (18.41-23.24)","3":"0.00 (0.00-0.00)","4":"1.12 (0.70-1.54)"},{"1":"Region","2":"Whitsunday (-)","3":"0.02 (0.02-0.02)","4":"1.00 (0.72-1.27)"},{"1":"Corrected depth","2":"7.16 (6.80-7.35)","3":"0.00 (0.00-0.00)","4":"0.94 (0.61-1.71)"},{"1":"Exposure to primary weeks","2":"0.00 (0.00-0.00)","3":"0.00 (0.00-0.01)","4":"0.79 (0.31-1.34)"},{"1":"Cyclone","2":"0.00 (0.00-0.00)","3":"0.01 (0.01-0.01)","4":"0.16 (0.05-0.35)"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}} -->
+<!--   </script> -->
+<!-- </div> -->
+
+
+<!-- <style> -->
+<!--     #wrap { width: 600px; height: 390px; padding: 0; overflow: hidden; } -->
+<!--     #frame { width: 800px; height: 520px; border: 1px solid black; } -->
+<!--     #frame { -->
+<!--         -ms-zoom: 0.5; -->
+<!--         -moz-transform: scale(0.5); -->
+<!--         -moz-transform-origin: 0 0; -->
+<!--         -o-transform: scale(0.5); -->
+<!--         -o-transform-origin: 0 0; -->
+<!--         -webkit-transform: scale(0.5); -->
+<!--         -webkit-transform-origin: 0 0; -->
+<!--     } -->
+</style>
+
+
+<script>
+$("select").change(function() {
+  $("#figure").html($("<img />", { src: 'output/figures/data.all.abt.' + $(this).val() + '_ABT_short_in.png'}));
+//                                                                       .get('temp.html', function(data){$('#figure').append($(data));});
+//                                                                       .append('<p>asdfasdf</p>');
+//$("#figure").get("temp.html", function(data){alert(data);}, 'text');
+//$("#figure").load('https://aims.github.io/inshore_fish/fishanalysis.html');
+  $("#table").attr('src','output/tables/stats_' + $(this).val() + '.html');
+   });
+                                      </script>

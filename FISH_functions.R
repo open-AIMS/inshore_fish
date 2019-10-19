@@ -6,7 +6,8 @@ EDA_histograms = function(var='', group='',dat=NULL, var.lookup) {
             ggplot(dat) + geom_histogram(aes(x=!!sym(var))) +
             scale_x_continuous(pretty.name),
             ggplot(dat) + geom_histogram(aes(x=!!sym(var))) +
-            scale_x_log10(pretty.name),
+                                        #scale_x_log10(pretty.name),
+            scale_x_continuous(pretty.name, trans=scales::pseudo_log_trans(sigma=1, base=10)),
             nrow=1
         )
     } else {
@@ -19,6 +20,29 @@ EDA_histograms = function(var='', group='',dat=NULL, var.lookup) {
 }
 ## ----end
 
+## ---- EDA.histograms_grob
+EDA_histograms_grob = function(var='', group='',dat=NULL, var.lookup) {
+    pretty.name = as.character(var.lookup$pretty.name[var.lookup$Abbreviation==var])
+    if (is.numeric(dat[,var])) {
+        arrangeGrob(
+            ggplot(dat) + geom_histogram(aes(x=!!sym(var))) +
+            scale_x_continuous(pretty.name),
+            ggplot(dat) + geom_histogram(aes(x=!!sym(var))) +
+                                        #scale_x_log10(pretty.name),
+            scale_x_continuous(pretty.name, trans=scales::pseudo_log_trans(sigma=1, base=10)),
+            nrow=1
+        )
+    } else {
+        arrangeGrob(
+            ggplot(dat) + geom_bar(aes(x=!!sym(var), fill=!!sym(group))) +
+            scale_x_discrete(pretty.name),
+            nrow=1
+        )
+    }
+}
+## ----end
+
+
 ## ---- EDA.density
 EDA_density = function(var='', group='', dat=NULL, var.lookup) {
     pretty.name = as.character(var.lookup$pretty.name[var.lookup$Abbreviation==var])
@@ -27,7 +51,26 @@ EDA_density = function(var='', group='', dat=NULL, var.lookup) {
             ggplot(dat) + geom_density(aes(x=!!sym(var), fill=!!sym(group)), alpha=0.5) +
             scale_x_continuous(pretty.name),
             ggplot(dat) + geom_density(aes(x=!!sym(var), fill=!!sym(group)), alpha=0.5) +
-            scale_x_log10(pretty.name),
+            scale_x_continuous(pretty.name, trans=scales::pseudo_log_trans(sigma=1, base=10)),
+            #scale_x_log10(pretty.name),
+            nrow=1
+        )
+    } else {
+    }
+}
+## ----end
+
+
+## ---- EDA.density_grob
+EDA_density_grob = function(var='', group='', dat=NULL, var.lookup) {
+    pretty.name = as.character(var.lookup$pretty.name[var.lookup$Abbreviation==var])
+    if (is.numeric(dat[,var])) {
+        arrangeGrob(
+            ggplot(dat) + geom_density(aes(x=!!sym(var), fill=!!sym(group)), alpha=0.5) +
+            scale_x_continuous(pretty.name),
+            ggplot(dat) + geom_density(aes(x=!!sym(var), fill=!!sym(group)), alpha=0.5) +
+            scale_x_continuous(pretty.name, trans=scales::pseudo_log_trans(sigma=1, base=10)),
+            #scale_x_log10(pretty.name),
             nrow=1
         )
     } else {
@@ -726,9 +769,9 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
     }
     r=NULL
     for (j in 1:length(mod)) {
-        r = rbind(r, abt::relative.influence(mod[[j]]))
+        r = rbind(r, abt::relative.influence(mod[[j]], scale=FALSE))
     }
-    r=r[-which(rowSums(r)==0),]
+    if (any(rowSums(r)==0))  r=r[-which(rowSums(r)==0),]
     r=r %>% as.data.frame %>% mutate_all(function(x) 100*x/rowSums(.))
     rel.imps = apply(r, 2, function(x) c('Mean'=median(x),quantile(x, p=c(0.025,0.25,0.75,0.975)))) %>%
         as.data.frame %>%
@@ -826,6 +869,7 @@ stats.abt = function(mod, fitMethod=1, analysis) {
             #print(j)
             ## Make some prediction data.  Note, this will include means of non-focal predictors,
             ## Yet for some of the methods below, they will be replaced with NA values before predictions.
+            #if (!exists('mod[[1]]$mf')) mod[[1]]$mf = mod[[1]]$m
             newdata = prediction.data(Var=j, formula(mod[[i]]$Terms), data=mod[[1]]$mf, cyclic=NULL, groups=analysis[[j]], cat_levels=list(NTR.Pooled='NTR'))
             pred=j#preds[i]
             #xlab = xlabs[[pred]]

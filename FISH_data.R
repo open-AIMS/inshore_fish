@@ -5,7 +5,6 @@ fish = read.csv('data/Fish benthic physical sitelevel 2019.csv', strip.white=TRU
 fish %>% glimpse
 ## ----end
 
-
 ## ---- nameLookup
 var.lookup = rbind(
     data.frame(pretty.name='Total density', Field.name='Total.fish.density', Abbreviation='TFD', Family='gaussian', Type='Response', Transform='log', Groupby=''),
@@ -62,6 +61,7 @@ fish = fish %>%
     mutate(REGION=factor(REGION, levels=c('Palm','Magnetic','Whitsunday','Keppel')))
 save(fish, file='data/fish.RData')
 ## ----end
+
 
 ## Exploratory data analyses
 
@@ -257,3 +257,111 @@ EDA_density(var='PREY.DENSITY', group='REGION', dat=fish, var.lookup=var.lookup)
 EDA_histograms(var='PREY.BIOMASS', dat=fish, var.lookup=var.lookup)
 EDA_density(var='PREY.BIOMASS', group='REGION', dat=fish, var.lookup=var.lookup)
 ## ----end
+
+
+## ---- readSpeciesList
+speciesList = read.csv('data/Species selection.csv', strip.white=TRUE)
+speciesList %>% glimpse
+speciesList = speciesList %>% dplyr::select(-X) %>% dplyr::rename(`all.model`=`All.regions.model`, `Palm.model`=`Palms.model`)
+## ----end
+
+## ---- nameLookup.species
+speciesNames = levels(unlist(speciesList))
+speciesNames = speciesNames[speciesNames!=""]
+## The names dont quite line up between the two data sets
+## The following lines are to help them match
+speciesNames = gsub(' ','.',speciesNames)
+speciesNames = speciesNames[speciesNames!="pse.tuka"]
+
+
+speciesList = sapply(speciesNames, function(x) colSums(speciesList==x[1]), simplify=FALSE,USE.NAMES = TRUE)
+save(speciesList, file='data/speciesList.RData')
+
+var.lookup.species = do.call('rbind',
+                             lapply(speciesNames, function(x) data.frame(pretty.name=x, Field.name=x,
+                                                                              Abbreviation=x, Family='poisson',
+                                                                              Type='Response', Transform='I',
+                                                                              Groupby='')
+                                    )
+                             )
+var.lookup.species = rbind(
+    var.lookup.species,
+    data.frame(pretty.name='Region', Field.name='REGION', Abbreviation='REGION', Family=NA, Type='Predictor', Transform='I', Groupby=''),
+    data.frame(pretty.name='NTR Pooled', Field.name='NTR.Pooled', Abbreviation='NTR.Pooled', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='LHC % (live hard coral cover)', Field.name='LHC_.', Abbreviation='LHC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='SC % (soft coral)', Field.name='SC_.', Abbreviation='SC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='MA % (macroalgal cover)', Field.name='MAC_.', Abbreviation='MA', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Turf %', Field.name='Turf_.', Abbreviation='TURF', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Unconsolidated %', Field.name='Unconsolidated_.', Abbreviation='UC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Benthic richness', Field.name='Benthic.richness', Abbreviation='BR', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Coral morphological diversity', Field.name='Coral_Morph.Diversity', Abbreviation='CMD', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Slope', Field.name='slope', Abbreviation='SLOPE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Rugosity', Field.name='rugosity', Abbreviation='RUG', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='SCI (structural complexity)', Field.name='SCI', Abbreviation='SCI', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Chla', Field.name='ChlA', Abbreviation='CHL', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Kd490', Field.name='kd490', Abbreviation='KD490', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='SST mean', Field.name='SSTmean', Abbreviation='SSTMEAN', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='SST anom', Field.name='SSTanom', Abbreviation='SSTANOM', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Wave exposure', Field.name='wave.exposure.index', Abbreviation='WAVE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Corrected depth', Field.name='Corrected.depth', Abbreviation='DEPTH', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Max DHW', Field.name='maxDHW', Abbreviation='DHW', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Cyclone', Field.name='Cyclone', Abbreviation='CYCLONE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Exposure to primary weeks', Field.name='Exposure.to.primary.weeks', Abbreviation='EXP', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Prey density', Field.name='Prey.density', Abbreviation='PREY.DENSITY', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Prey biomass', Field.name='Prey.biomass', Abbreviation='PREY.BIOMASS', Family=NA, Type='Predictor', Transform='I', Groupby='Region')
+)
+save(var.lookup.species, file='data/var.lookup.species.RData') 
+names.species = with(var.lookup.species, setNames(as.character(Field.name), Abbreviation))
+## exclude those whose names equal their values otherwise there will be duplicate fields created in the fish data
+names.species = names.species[names(names.species)!=names.species]
+## ----end
+
+## ---- AbbreviatedNamesSpecies
+## Create duplicates of the fields that are not already abbreviated
+fish = read.csv('data/Fish benthic physical sitelevel 2019.csv', strip.white=TRUE)
+
+fish.species = fish %>%
+    mutate(SSTmean=ifelse(as.character(SSTmean)=='#N/A',NA,as.numeric(as.character(SSTmean)))) %>%
+    mutate_at(as.character(var.lookup.species$Field.name), list(A=~I)) %>%
+    rename(!!! gsub('(.*)','\\1_A',names.species)) %>%
+    mutate(REGION=factor(REGION, levels=c('Palm','Magnetic','Whitsunday','Keppel')))
+save(fish.species, file='data/fish.species.RData')
+## ----end
+
+
+
+
+## ---- SpeciesEDALoopOld
+load('data/var.lookup.species.RData')
+resp.lookup = var.lookup.species %>% filter(Type=='Response') %>% droplevels
+
+plots = lapply(speciesNames, function(x) {
+    p1=EDA_histograms_grob(var=x, dat=fish, var.lookup=var.lookup.species)
+    p2=EDA_density_grob(var=x, group='REGION', dat=fish, var.lookup=var.lookup.species)
+    list('Hist'=p1,'Dens'=p2)
+})
+## Need to make this into a single level list
+plots=unlist(plots, recursive = FALSE)
+paths = paste0(apply(expand.grid(c('eda_','dens_'), speciesNames), 1, paste0, collapse=""), '.png')
+pwalk(list(paths,plots), ggsave, path='fishanalysis_species_files/figure-html', width=8, height=5, dpi=300)
+## ----end
+
+
+
+## ---- SpeciesEDALoop
+load('data/var.lookup.species.RData')
+resp.lookup = var.lookup.species %>% filter(Type=='Response') %>% droplevels
+
+for (s in speciesNames) {
+                                        #print(s)
+    resp=s
+    cat(paste('## ',resp.lookup$pretty.name[resp.lookup$Abbreviation==resp],' {.tabset .tabset-pills} \n\n'))
+    EDA_histograms(var=s, dat=fish, var.lookup=var.lookup.species)
+    cat('\n\n')
+    EDA_density(var=s, group='REGION', dat=fish, var.lookup=var.lookup.species)
+    cat('\n\n')
+}
+
+## ----end
+
+

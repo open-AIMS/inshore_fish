@@ -1,0 +1,12 @@
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -N Fish
+#PBS -l nodes=1:ppn=20
+#PBS -l walltime=200:00:00
+#PBS -l pmem=1Gb
+#PBS -M m.logan@aims.gov.au
+#PBS -m abe
+## qsub -l mem=1gb -l nodes=1:ppn=20 testing.batch
+cd ~/tmp/fish
+module load R/3.5.3
+R --vanilla < FISH_HPC_gbm.R

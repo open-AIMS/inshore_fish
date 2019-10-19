@@ -153,3 +153,89 @@ for (a in 1:length(analyses)) {
 #plot(mod,c(15,1))
 
 ## ----end
+
+##========================Species specific====================================================
+
+## ---- analysis.list.species
+load('data/fish.species.RData')
+load('data/var.lookup.species.RData')
+resp.lookup.species = var.lookup.species %>% filter(Type=='Response') %>% droplevels
+pred.lookup.species = var.lookup.species %>% filter(Type=='Predictor') %>% droplevels
+
+groupings.all.species = vector('list', nrow(pred.lookup.species))
+names(groupings.all.species) = pred.lookup.species$Abbreviation
+groupings.region.species = vector('list', nrow(pred.lookup.species))
+names(groupings.region.species) = pred.lookup.species$Abbreviation
+for (i in 1:nrow(pred.lookup.species)) {
+    pred = as.character(pred.lookup.species[i,'Abbreviation'])
+    groupings.all.species[[pred]] = ifelse(pred=='REGION',NA,'REGION')
+    groupings.region.species[[pred]] = ifelse(pred=='NTR.Pooled',NA,'NTR.Pooled')
+}
+groupings.all.species = do.call('c',groupings.all.species)
+groupings.region.species = do.call('c',groupings.region.species)
+
+gfun = function(f, form) {
+    #print(f)
+    #print(form[[f]])
+    form = attr(terms(form[[f]]),'term.labels')
+    if (f=='all') return(groupings.all.species[form])
+    else return(groupings.region.species[form])
+}
+
+analyses.species = vector('list',nrow(resp.lookup.species))
+names(analyses.species) = resp.lookup.species$Abbreviation
+for (i in 1:nrow(resp.lookup.species)) {
+    resp = as.character(resp.lookup.species[i,'Abbreviation'])
+    fun = as.character(resp.lookup.species[i,'Transform'])
+    fam = as.character(resp.lookup.species[i,'Family'])
+    
+    analyses.species[[resp]] = list('formulas' = lapply(formulas, function(f) update(f, paste0(fun,'(',resp,') ~.'))),
+                            'family' = fam)
+    #if (resp %in% c('PI','PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
+    #if (resp %in% c('PTB','PLB')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.BIOMASS))
+    analyses.species[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses.species[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
+}
+save(analyses.species, file='data/analyses.species.RData')
+## ----end
+
+
+## ---- ABT.species.HPC
+library(ssh)
+session = ssh_connect('mlogan@hpc-login', keyfile='~/.ssh/hpc_id_rsa')
+scp_upload(session,
+           files=c('FISH_functions.R',
+                   'FISH_HPC_gbm.R',
+                   'FISH_HPC_gbm.batch'),
+           to = "~/tmp/fish", verbose = TRUE)
+scp_upload(session,
+           files=c('data/analyses.species.RData',
+                   'data/fish.species.RData',
+                   'data/speciesList.RData',
+                   'data/var.lookup.species.RData'),
+           to = "~/tmp/fish/data", verbose = TRUE)
+ssh_exec_wait(session,
+              command = "qsub -l mem=1gb -l nodes=1:ppn=20 ~/tmp/fish/FISH_HPC_gbm.batch\n")
+ssh_exec_wait(session, command = "qstat -a")
+#ssh_exec_wait(session, command = "qdel 71728")
+ssh_disconnect(session)
+## ----end
+
+## ---- ABT.species.HPC.receive
+session = ssh_connect('mlogan@hpc-login', keyfile='~/.ssh/hpc_id_rsa')
+scp_download(session,
+             files=c('/export/home/l-p/mlogan/tmp/fish/output/figures/*_in.p*'),
+             to = "output/figures")
+scp_download(session,
+             files=c('/export/home/l-p/mlogan/tmp/fish/data/pred.1*.RData'),
+             to = "data/")
+scp_download(session,
+             files=c('/export/home/l-p/mlogan/tmp/fish/data/stats*.RData'),
+             to = "data/")
+scp_download(session,
+             files=c('/export/home/l-p/mlogan/tmp/fish/data/thresholds*.RData'),
+             to = "data/")
+# Note, for some reason the above returns an error, even through it is successful
+ssh_disconnect(session)
+## ----end
+
+
