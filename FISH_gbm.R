@@ -76,7 +76,7 @@ for (a in 1:length(analyses)) {
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
                   var.monotone=as.vector(MONOTONE))
         p=plot.abts(mod, var.lookup, center=FALSE, type='response', return.grid=TRUE,
-                    groupby=na.omit(unique(analyses[[a]]$groups[[f]])))#
+                    groupby=na.omit(unique(analyses[[a]]$groups[[f]])),pt.size=14)#
         thresholds=p$thresholds
         save(thresholds, file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
         ps = p[['ps']]

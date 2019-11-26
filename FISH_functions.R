@@ -661,7 +661,7 @@ common_legend = function(gg) {
 ## ----end
 
 ## ---- plot.abts
-plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='response', trans=NULL,groupby=NULL, ylab=NULL,manual.trans.y) {
+plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='response', trans=NULL,groupby=NULL, ylab=NULL,manual.trans.y, pt.size=10) {
     N=length(mod)
     mdata=mod[[1]]$mdata
     pdata=mod[[1]]$mdata[,-1]
@@ -707,10 +707,14 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     geom_line() +
                                         #scale_y_continuous(paste0('f(',parse(text=xlab),')')) +
                     scale_x_continuous(xlab) +
-                    theme_classic()
+                    theme_classic(pt.size)
                 if (groupby=='NTR') {
                     p[[i]] = p[[i]] + scale_fill_manual(pretty.groupby, values=c('blue','lightgreen','darkgreen')) 
                     p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','lightgreen','darkgreen'))     
+                }
+                if (groupby=='NTR.Pooled') {
+                    p[[i]] = p[[i]] + scale_fill_manual(pretty.groupby, values=c('blue','green3')) 
+                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','green3'))   
                 }
                 
                 thresholds[[preds[i]]] = newdata %>% group_by_at(groupby) %>%
@@ -732,7 +736,7 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     geom_line() +
                                         #scale_y_continuous(paste0('f(',parse(text=xlab),')')) +
                     scale_x_continuous(xlab) +
-                    theme_classic()
+                    theme_classic(pt.size)
             }
         } else {
             thresholds[[preds[i]]]=NULL
@@ -744,10 +748,18 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     scale_color_discrete(pretty.groupby) + 
                                         #scale_y_continuous(paste0('f(',parse(text=xlab),')')) +
                     scale_x_discrete(xlab) +
-                    theme_classic()
+                    theme_classic(pt.size)
                 if (groupby=='NTR') {
                     p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','lightgreen', 'darkgreen')) 
                 }
+                if (groupby=='NTR.Pooled') {
+                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','green3')) 
+                }
+                if (groupby=='REGION') {
+                    p[[i]] = p[[i]] +
+                        scale_x_discrete(xlab, breaks=c('Palm','Magnetic','Whitsunday','Keppel'), labels=c('PA','MI','WH','KE'))
+                }
+                                
             } else  {
                 p[[i]] <- ggplot(newdata, aes(y=y, x=X)) +
                     geom_blank() +
@@ -755,7 +767,7 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     geom_point() +
                                         #scale_y_continuous(paste0('f(',parse(text=xlab),')')) +
                     scale_x_discrete(xlab) +
-                    theme_classic()
+                    theme_classic(pt.size)
             }
         }
         Range[1] = ifelse(min(newdata$lo)<Range[1], min(newdata$lo), Range[1])
@@ -793,7 +805,7 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
             scale_x_discrete(labels=as.character(rel.imps$pretty.name)) + 
             scale_fill_manual(values=c('gray','black'))+
             scale_color_manual(values=c('gray','black'))+
-            coord_flip() + theme_classic() +
+            coord_flip() + theme_classic(pt.size) +
             #ggtitle(paste0(letters[ii],')')) +
             theme(axis.title.y=element_blank(),plot.title=element_text(margin=ggplot2::margin(t=10,b=-10), hjust=0.01),, plot.margin=unit(c(0,1,0,0), 'lines'),
                   panel.spacing=unit(0,'lines'))
