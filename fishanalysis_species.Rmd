@@ -54,7 +54,7 @@ Preparations
 
 ```{r Libraries, results='markdown', eval=TRUE}
 ```
-
+ 
 <details><summary>Raw fish data</summary>
 ```{r readFish, results='markdown', eval=TRUE}
 ```

@@ -1,7 +1,8 @@
 source('FISH_functions.R')
 
 ## ---- readFish
-fish = read.csv('data/Fish benthic physical sitelevel 2019.csv', strip.white=TRUE)
+#fish = read.csv('data/Fish benthic physical sitelevel 2019.csv', strip.white=TRUE)
+fish = read.csv('data/Selected fish benthic physical sitelevel 2019.csv', strip.white=TRUE)
 fish %>% glimpse
 ## ----end
 
@@ -11,6 +12,8 @@ var.lookup = rbind(
     data.frame(pretty.name='Total species richness', Field.name='Total.fish.species.richness', Abbreviation='TFSR', Family='gaussian', Type='Response', Transform='I', Groupby=''),
     data.frame(pretty.name='Benthic invertivores', Field.name='BE', Abbreviation='BE', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Grazers', Field.name='GRAZ', Abbreviation='GRAZ', Family='gaussian', Type='Response', Transform='log', Groupby=''),
+    data.frame(pretty.name='Grazers2', Field.name='GRAZ2', Abbreviation='GRAZ2', Family='gaussian', Type='Response', Transform='log', Groupby=''),
+    data.frame(pretty.name='Parrot', Field.name='Parrot', Abbreviation='PA', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Corallivores', Field.name='COR', Abbreviation='COR', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Omnivores', Field.name='OM', Abbreviation='OM', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Planktivores', Field.name='PL', Abbreviation='PL', Family='gaussian', Type='Response', Transform='log', Groupby=''),
@@ -53,7 +56,7 @@ names = names[names(names)!=names]
 ## ----end
 
 ## ---- AbbreviatedNames
-## Create duplicates of the fields that are not already abbreviated
+## Create duplicates of the fields that are not already abbreviated 
 fish = fish %>%
     mutate(SSTmean=ifelse(as.character(SSTmean)=='#N/A',NA,as.numeric(as.character(SSTmean)))) %>%
     mutate_at(as.character(var.lookup$Field.name), list(A=~I)) %>%
@@ -83,6 +86,16 @@ EDA_density(var='BE', group='REGION', dat=fish, var.lookup=var.lookup)
 ## ---- EDA.GRAZ
 EDA_histograms(var='GRAZ', dat=fish, var.lookup=var.lookup)
 EDA_density(var='GRAZ', group='REGION', dat=fish, var.lookup=var.lookup)
+## ----end
+
+## ---- EDA.GRAZ2
+EDA_histograms(var='GRAZ2', dat=fish, var.lookup=var.lookup)
+EDA_density(var='GRAZ2', group='REGION', dat=fish, var.lookup=var.lookup)
+## ----end
+
+## ---- EDA.PA
+EDA_histograms(var='PA', dat=fish, var.lookup=var.lookup)
+EDA_density(var='PA', group='REGION', dat=fish, var.lookup=var.lookup)
 ## ----end
 
 ## ---- EDA.COR
@@ -349,7 +362,7 @@ pwalk(list(paths,plots), ggsave, path='fishanalysis_species_files/figure-html', 
 
 
 ## ---- SpeciesEDALoop
-load('data/var.lookup.species.RData')
+load('data/var.lookup.species.RData') 
 resp.lookup = var.lookup.species %>% filter(Type=='Response') %>% droplevels
 
 for (s in speciesNames) {

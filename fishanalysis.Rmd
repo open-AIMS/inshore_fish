@@ -107,6 +107,14 @@ Preparations
 ```{r EDA.GRAZ, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
 ```
 
+#### Grazers2
+```{r EDA.GRAZ2, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Parrot
+```{r EDA.PA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
 #### Corallivores
 ```{r EDA.COR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
 ```
@@ -302,7 +310,7 @@ Results {.tabset .tabset-faded}
 
 ```{r ABT, results='markdown', eval=FALSE}
 ```
-
+ 
  
 ```{r name, results='asis', eval=TRUE}
 load('data/var.lookup.RData')
