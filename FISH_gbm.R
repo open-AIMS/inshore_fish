@@ -145,6 +145,110 @@ for (a in 1:length(analyses)) {
         #save(rel.importance, file=paste0('data/rel.importance_',mod_num,'_',resp,'.RData'))
         #save(thresholds, file=paste0('data/thresholds_', mod_num,'_',resp,'.RData'))
                                         #write.table(bind_rows(thresholds, .id='Var'), file=paste0('data/thresholds_',mod_num,'_',resp,'.csv'), quote=FALSE, row.names=FALSE)
+        if (1==2) { # all this is to attempt to address co-authors comments
+        ## Many of the predictors vary over space and time.  As is, the models just indicate whether there is a relationship between
+        ## the response and the various predictors.  Although fitting the models separately for the different Regions does partly tease
+        ## apart the spatial from temporal, it does not completely do this (as there is still spatiality within Regions.
+        ## One way we might be able to address this is to take the 'important predictors' from a given model and then refit with
+        ## specifically centred versions of the predictors.  For example, if we centre a predictor within a site, then we effectively remove
+        ## the spatial component of this variable.  Similarly, if we centre on time (year), then we remove the temporal element.
+
+        ## 1. start by identifying the important predictors
+        wch=rel.inf$Var[which(as.numeric(rel.inf$Mean.rel.inf)> (100/nrow(rel.inf)))]
+        wch.n = wch[unlist(lapply(wch, function(x) is.numeric(fish.sub[,x])))]
+        wch.c = wch[unlist(lapply(wch, function(x) is.factor(fish.sub[,x])))]
+
+        ## Remove spatial element
+        fish.sub1 = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'SITE')))) %>%
+            mutate_at(vars(wch.n), function(x) x-mean(x)) %>%
+            dplyr::rename_at(vars(wch.n), ~paste0(wch.n,'.t')) %>%
+            dplyr::select(!!c('TFD','YEAR',paste0(wch.n,'.t')))
+        fish.sub1.means = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'SITE')))) %>%
+            summarize_at(vars(wch.n), function(x) mean(x)) 
+
+        #fish.sub1 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=SITE)) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=SITE)) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=YEAR, color=factor(SITE))) + facet_wrap(~REGION)
+        fish.sub1 %>% ggplot() + geom_line(aes(y=LHC,x=YEAR, color=factor(SITE))) + facet_wrap(~REGION)
+        #fish.sub %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC)) + facet_wrap(~REGION)
+        fish.sub %>% ggplot() + geom_line(aes(y=LHC,x=YEAR, color=factor(SITE))) + facet_wrap(~REGION)
+        
+        ## Remove temporal element
+        fish.sub2 = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'YEAR')))) %>%
+            mutate_at(vars(wch.n), function(x) x-mean(x)) %>%
+            dplyr::rename_at(vars(wch.n), ~paste0(wch.n,'.s')) %>%
+            dplyr::select(!!c('TFD','SITE',paste0(wch.n,'.s')))
+
+        fish.sub3 = fish.sub1 %>% full_join(fish.sub2)
+        
+        fish.sub2.means = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'YEAR')))) %>%
+            summarize_at(vars(wch.n), function(x) mean(x)) 
+
+
+        fish.sub1 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=factor(SITE))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        fish.sub2 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        fish.sub %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC)) + facet_wrap(~REGION)
+
+        fish.sub1 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=factor(SITE))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=factor(SITE))) + facet_wrap(~REGION)
+        #fish.sub1 %>% ggplot() + geom_line(aes(y=log(TFD),x=LHC, color=factor(YEAR))) + facet_wrap(~REGION)
+        fish.sub2 %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC, color=factor(SITE))) + facet_wrap(~REGION)
+        fish.sub %>% ggplot() + geom_point(aes(y=log(TFD),x=LHC)) + facet_wrap(~REGION)
+
+
+        
+        fish.sub2 %>% ggplot() + geom_line(aes(y=LHC,x=YEAR, color=factor(SITE))) + facet_wrap(~REGION)
+        fish.sub2 %>% ggplot() + geom_line(aes(y=LHC,x=as.numeric(SITE), color=factor(YEAR))) + facet_wrap(~REGION)
+
+        p.names=colnames(fish.sub3)[!colnames(fish.sub3) %in% c('SITE','TFD','YEAR')]
+        ff = update(analyses[[a]]$formulas[[f]], . ~ 1)
+        ff=as.formula(c(gsub('1','',deparse(ff)), paste(p.names, collapse='+')))
+        MONOTONE = assignMonotone(fish.sub3, ff)
+        set.seed(123)
+        mod = abt(ff, data=fish.sub3, distribution=analyses[[a]]$family,
+                  cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
+                  var.monotone=as.vector(MONOTONE))
+        summary(mod)
+        pdf(file='TFD.W.test.pdf', width=10, height=30)
+        par(mfrow=c(5,2))
+        #for (i in c(2,7,3,8,4,9,5,10,6,11,1)) plot(mod,i, ylim=c(-1.5,1.5))
+        for (i in c(1,6,2,7,3,8,4,9,5,10)) plot(mod,i, ylim=c(-1,1))
+        dev.off()
+
+        ## And now including the other predictors as well
+        fish.sub1 = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'SITE')))) %>%
+            mutate_at(vars(wch.n), function(x) x-mean(x)) %>%
+            dplyr::rename_at(vars(wch.n), ~paste0(wch.n,'.t')) %>%
+            dplyr::select(!!c('TFD','YEAR',paste0(wch.n,'.t')))
+        fish.sub2 = fish.sub %>% group_by_at(vars(one_of(c(wch.c,'YEAR')))) %>%
+            mutate_at(vars(wch.n), function(x) x-mean(x)) %>%
+            dplyr::rename_at(vars(wch.n), ~paste0(wch.n,'.s')) %>%
+            dplyr::select(!!c('TFD','SITE',paste0(wch.n,'.s')))
+
+        fish.sub3 = fish.sub1 %>% full_join(fish.sub2) %>% full_join(fish.sub)
+        
+        ff = deparse(analyses[[a]]$formulas[[f]])
+        for (w in wch.n) ff = gsub(w,paste0(w,'.t + ',w,'.s'), ff)
+        MONOTONE = assignMonotone(fish.sub3, ff)
+        set.seed(123)
+        mod = abt(ff, data=fish.sub3, distribution=analyses[[a]]$family,
+                  cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
+                  var.monotone=as.vector(MONOTONE))
+        summary(mod)
+        #pdf(file='TFD.W.test.pdf', width=10, height=30)
+        pdf(file='TFD.Region.test.pdf', width=10, height=30)
+        par(mfrow=c(5,2))
+        #for (i in c(2,7,3,8,4,9,5,10,6,11,1)) plot(mod,i, ylim=c(-1.5,1.5))
+        #for (i in c(5,6,7,8,2,3,19,20,11,22)) plot(mod,i, ylim=c(-1,1))
+        for (i in c(3,4,8,9,20,21,16,1,6,7)) plot(mod,i, ylim=c(-1,1))
+        dev.off()
+
+        }
+        
         rm(mod,pred.1,p,ps,ps1,g,stats,optim,rel.inf,R2,fit)
         gc()
     }
