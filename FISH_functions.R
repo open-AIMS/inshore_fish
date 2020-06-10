@@ -111,8 +111,7 @@ function (x, i.var = 1, npts, trim.grid = FALSE, return.grid = FALSE,
     if (one.abt <- any(class(x) == "single")) {
         n.trees <- x$n.trees
         se <- FALSE
-    }
-    else {
+    } else {
         tree.list <- x
         nlist <- length(x)
         x <- tree.list[[1]]
@@ -661,7 +660,7 @@ common_legend = function(gg) {
 ## ----end
 
 ## ---- plot.abts
-plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='response', trans=NULL,groupby=NULL, ylab=NULL,manual.trans.y, pt.size=10) {
+plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='response', trans=NULL,groupby=NULL, ylab=NULL,manual.trans.y, pt.size=10, mins=NULL, maxs=NULL) {
     N=length(mod)
     mdata=mod[[1]]$mdata
     pdata=mod[[1]]$mdata[,-1]
@@ -699,6 +698,15 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
         newdata = newdata %>% mutate_at(vars(y,lo,hi), list(trans))
         
         if (is.numeric(newdata$X)) {
+            ## adjust the predictor to reflect its uncentered values
+            if (!is.null(mins)) {
+                newdata =
+                    newdata %>%
+                    left_join(mins %>% dplyr::select(!!groupby, Min=!!pred)) %>%
+                    left_join(maxs %>% dplyr::select(!!groupby, Max=!!pred)) %>%
+                    group_by(!!groupby) %>%
+                    mutate(X=((X-min(X))/(max(X)-min(X))) * (Max-Min) + Min) 
+            }
             if (grouped) {
                 p[[i]] <- ggplot(newdata, aes(y=y, x=X, group=group, group=group, color=group, fill=group)) +
                     geom_ribbon(aes(ymin=lo, ymax=hi), color=NA,alpha=0.3) +
@@ -827,10 +835,11 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
 
 
 ## ---- stats.abt
+
 ## fitMethod=1: peffects.abt on newdata with NA values
 ## fitMethod=2; predict.abt on newdata
 ## fitMethod=3; predict.abt on data then averaged
-stats.abt = function(mod, fitMethod=1, analysis) {
+stats.abt = function(mod, fitMethod=1, analysis, mins=NULL, maxs=NULL) {
     N=length(mod)
     mdata=mod[[1]]$mdata
     pdata=mod[[1]]$mdata[,-1]
@@ -943,7 +952,7 @@ stats.abt = function(mod, fitMethod=1, analysis) {
        
         #optim[[paste0('Boot',i)]]=as.data.frame(lapply(aa ,getMax))
     }
-    optim=abt.get.optim(mod) #as.data.frame(lapply(fl ,getMax))
+    optim=abt.get.optim(mod, mins=mins, maxs=maxs) #as.data.frame(lapply(fl ,getMax))
     list(rel.imp=rel.imp, fit=fit,R2.value=R2.value, optim=optim)
 }
 
@@ -951,6 +960,7 @@ stats.abt = function(mod, fitMethod=1, analysis) {
 
 
 ## ---- Prediction.data
+
 ## Generate a general prediction grid for a focal predictor (and optional group)
 ## This is a sequence for the focal predictor (optionally conditional on the levels of the grouping variable)
 ## and means for all other predictors
@@ -1102,7 +1112,7 @@ prediction_data.old = function(formula, data, group_by_cats=TRUE,groups=NULL,con
     grid.levels
     
 }
-## ----
+## ----end
 
 
 ## ---- R2.gbm
@@ -1129,7 +1139,7 @@ R2.gbm = function(x, method=1) {
 
 
 ## ---- abt.get.optim
-abt.get.optim = function(mod, center=FALSE, return.grid=TRUE,type='response', npts=100) {
+abt.get.optim = function(mod, center=FALSE, return.grid=TRUE,type='response', npts=100, mins=NULL, maxs=NULL) {
     tree.list <- mod
     nlist=length(mod)
     x <- tree.list[[1]]
@@ -1153,7 +1163,7 @@ abt.get.optim = function(mod, center=FALSE, return.grid=TRUE,type='response', np
             grid.levels[[i]] <- as.numeric(factor(x$var.levels[[i.var[i]]], 
                                                   levels = x$var.levels[[i.var[i]]])) - 1
             XX = factor(x$var.levels[[i.var[i]]], 
-                                                  levels = x$var.levels[[i.var[i]]])
+                        levels = x$var.levels[[i.var[i]]])
         }
         X <- expand.grid(grid.levels)
         names(X) <- paste("x", 1:length(i.var), sep = "")
@@ -1168,6 +1178,9 @@ abt.get.optim = function(mod, center=FALSE, return.grid=TRUE,type='response', np
                 var.type = as.integer(x$var.type), PACKAGE = "abt")
         }
         wch=apply(ytemp, 2, which.max)
+        if (!is.null(mins) & is.numeric(x$var.levels[[i.var]])) {
+            XX = ((XX-min(XX))/(max(XX)-min(XX))) * (max(maxs[[pred]]) - min(mins[[pred]])) + min(mins[[pred]])
+        }
         optims[[pred]] = XX[wch]
     }
     optim = as.data.frame(optims) %>% mutate(Boot=paste0('Boot.',1:n()))
@@ -1239,6 +1252,7 @@ pretty.stats = function(stats, var.lookup) {
                `Rel inf`=sprintf('%s (%s-%s)', Median.rel.inf, lower.rel.inf, upper.rel.inf)) %>%
         select(Covariate=pretty.name, Optimum, `R-sq`, `Rel inf`)
 }
+
 pretty.thresholds = function(thresholds, stats, var.lookup) {
     thresholds =
         bind_rows(thresholds, .id='Var') %>%
