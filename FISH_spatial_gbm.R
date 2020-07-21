@@ -18,7 +18,7 @@ save(var.lookup, file='data/var.lookup_spatial.RData')
 ## ---- IdentifyInfluentialPredictors
 load(file='data/analyses.RData')
 new_analyses = analyses
-fish.sub=fish.sub %>% as.data.frame
+#fish.sub=fish.sub %>% as.data.frame
 for (a in 1:length(new_analyses)) {
     resp=names(new_analyses)[a]
     print(paste('Response =',resp))
@@ -190,7 +190,7 @@ for (a in 1:length(new_analyses)) {
                   var.monotone=as.vector(MONOTONE))
         summary(mod)
         
-        ## Modify the analysis groups to incorporate the spatial and temporal versions.
+        ## Modify the analysis groups to incorporate just the selected spatial versions.
         new_analyses[[a]]$groups[[f]] = new_analyses[[a]]$groups[[f]][which(names(new_analyses[[a]]$groups[[f]]) %in% VARS)]
         
         p=plot.abts(mod, var.lookup, center=FALSE, type='response', return.grid=TRUE,
