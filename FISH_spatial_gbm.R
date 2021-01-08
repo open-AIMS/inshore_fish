@@ -4,7 +4,7 @@ source('FISH_functions.R')
 load('data/fish.RData')
 load('data/var.lookup.RData')
 
-var.lookup = var.lookup %>%
+ var.lookup = var.lookup %>%
     rbind(var.lookup %>%
           mutate(Field.name=paste0(Field.name,'.t'),
                  Abbreviation=paste0(Abbreviation,'.t'))) %>%
@@ -23,7 +23,7 @@ for (a in 1:length(new_analyses)) {
     resp=names(new_analyses)[a]
     print(paste('Response =',resp))
     for (f in 1:length(new_analyses[[a]]$formulas)) {
-        new_analyses = analyses
+        #new_analyses = analyses
         mod.name = names(new_analyses[[a]]$formulas)[f]
         print(paste('Model =',mod.name))
 
@@ -34,6 +34,8 @@ for (a in 1:length(new_analyses)) {
             val=min(val[val>0], na.rm=TRUE)
             fish.sub[, as.character(get_response(analyses[[a]]$formulas[[f]]))] = fish.sub[,as.character(get_response(analyses[[a]]$formulas[[f]]))] + val
         }
+
+        fish.sub = fish.sub %>% mutate_if(is.character,  as.factor)
 
         load(file=paste0('data/pred.1_',mod.name,'_',resp,'.RData'))
         rel.inf = summarize_values(pred.1$rel.imp, type='Rel.inf') %>%
@@ -133,6 +135,8 @@ for (a in 1:length(new_analyses)) {
             ff = gsub(paste(paste0(w,' '),'|',paste0(w,'$'), collapse='', sep=''),paste0(w,'.t + ',w,'.s '), ff)
         }
         MONOTONE = assignMonotone(fish.sub3, ff)
+        
+        fish.sub3 = fish.sub3 %>% mutate_if(is.character,  as.factor)
         set.seed(123)
         mod = abt(ff, data=fish.sub3, distribution=new_analyses[[a]]$family,
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
@@ -173,7 +177,9 @@ for (a in 1:length(new_analyses)) {
         ## ----end
         ## ---- SpatialAnalyses
         ## remove temporal elements
-        VARS = VARS[-grep('\\.t',VARS)]
+        if (length(grep('\\.t', VARS))>0) {
+          VARS = VARS[-grep('\\.t',VARS)]
+        }
         ff = update(as.formula(ff), as.formula(paste0('. ~',paste0(VARS, collapse=' + '))))
         if (f==1) {
             ff= update(ff, ~ . + REGION)
@@ -192,8 +198,16 @@ for (a in 1:length(new_analyses)) {
         
         ## Modify the analysis groups to incorporate just the selected spatial versions.
         new_analyses[[a]]$groups[[f]] = new_analyses[[a]]$groups[[f]][which(names(new_analyses[[a]]$groups[[f]]) %in% VARS)]
-        
-        p=plot.abts(mod, var.lookup, center=FALSE, type='response', return.grid=TRUE,
+
+        if (f>1) {
+          var.lookup1 = var.lookup %>%
+            mutate(Field.name=ifelse(Field.name %in% c('PCO1', 'PCO2'), paste0(Field.name, 'r'), Field.name),
+                   Abbreviation=ifelse(Abbreviation %in% c('PCO1', 'PCO2'), paste0(Abbreviation, 'r'), Abbreviation))
+        } else {
+          var.lookup1 = var.lookup
+        }
+
+        p=plot.abts(mod, var.lookup1, center=FALSE, type='response', return.grid=TRUE,
                     groupby=na.omit(unique(new_analyses[[a]]$groups[[f]])),pt.size=14,
                     mins=new_analyses[[a]]$mins[['spatial']],
                     maxs=new_analyses[[a]]$maxs[['spatial']])#
@@ -296,7 +310,8 @@ for (a in 1:length(new_analyses)) {
         gc()
     }
 }
-save(new_analyses, file='data/new_analyses.RData')
+#save(new_analyses, file='data/new_analyses.RData')
+save(new_analyses, file='data/new_analyses1.RData')
 ## ----end
 
 

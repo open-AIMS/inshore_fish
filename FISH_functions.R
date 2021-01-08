@@ -82,6 +82,7 @@ EDA_density_grob = function(var='', group='', dat=NULL, var.lookup) {
 assignMonotone = function(data,formula) {
     MF=model.frame(formula, data)
     dataClasses=attr(terms(MF),'dataClasses')[-1]
+    MF=MF %>% mutate_if(is.character, as.factor)    
     MF=MF %>% mutate_if(is.factor, as.numeric)
                                         #MM=model.matrix(formula,data)
     VAR_MONOTONE <- cor(MF[, 1], MF[, -1], method = 'spearman') / abs(cor(MF[, 1], MF[, -1], method = 'spearman'))
@@ -735,6 +736,8 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                                         #print(paste('groupby=',groupby))
                                         #print(paste('labels=',labels[[groupby]]))
             } else {
+              X=newdata$X
+              y=newdata$y
                 thresholds[[preds[i]]] = c(threshold.low=mean(findThreshold(x=X, y=y, deriv=1, type='low')),
                                            threshold.high=mean(findThreshold(x=X, y=y, deriv=1, type='high')),
                                            threshold.max=mean(findThreshold(x=X, y=y, deriv=1, type='max')),

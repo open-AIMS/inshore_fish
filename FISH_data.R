@@ -6,6 +6,28 @@ fish = read.csv('data/Selected fish benthic physical sitelevel 2019.csv', strip.
 fish %>% glimpse
 ## ----end
 
+## ---- AddPCO
+pco <- read.csv('data/Fish 2007-2019 PCO scores_allRegions.csv',  strip.white=TRUE)
+pco %>% glimpse
+
+fish = fish %>%
+  left_join(pco %>% dplyr::select(SITE=Site, PCO1, PCO2) %>% distinct)
+#save(fish, file='data/fish.RData')
+
+## the following are the PCO scores for calculated purely WITHIN a region
+## these will be added as PCO1r and PCO2r
+## the 'r' stands for region and for region specific analyses,  the formulae will be ammended to add the 'r'
+pco.k <- read.csv('data/Fish 2007-2019 PCO scores_Keppel.csv',  strip.white=TRUE) %>% dplyr::select(SITE=Site, PCO1r=PC1, PCO2r=PC2) 
+pco.m <- read.csv('data/Fish 2007-2019 PCO scores_Magnetic.csv',  strip.white=TRUE) %>% dplyr::select(SITE=Site, PCO1r=PC1, PCO2r=PC2)
+pco.p <- read.csv('data/Fish 2007-2019 PCO scores_Palm.csv',  strip.white=TRUE) %>% dplyr::select(SITE=Site, PCO1r=PC1, PCO2r=PC2)
+pco.w <- read.csv('data/Fish 2007-2019 PCO scores_Whitsunday.csv',  strip.white=TRUE) %>% dplyr::select(SITE=Site, PCO1r=PC1, PCO2r=PC2)
+pco.r <- bind_rows(pco.k, pco.m, pco.p, pco.w)
+pco.r %>% glimpse
+
+fish=fish %>%
+  left_join(pco.r)
+## ----end
+
 ## ---- nameLookup
 var.lookup = rbind(
     data.frame(pretty.name='Total density', Field.name='Total.fish.density', Abbreviation='TFD', Family='gaussian', Type='Response', Transform='log', Groupby=''),
@@ -24,8 +46,9 @@ var.lookup = rbind(
     data.frame(pretty.name='Plectropomus total biomass', Field.name='Plectropomus.total.biomass', Abbreviation='PTB', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Plectropomus legal density', Field.name='Plectropomus.legal.density', Abbreviation='PLD', Family='gaussian', Type='Response', Transform='log', Groupby=''),
     data.frame(pretty.name='Plectropomus legal biomass', Field.name='Plectropomus.legal.biomass', Abbreviation='PLB', Family='gaussian', Type='Response', Transform='log', Groupby=''),
+  data.frame(pretty.name='PCO1',  Field.name='PCO1', Abbreviation='PCO1', Family='gaussian', Type='Response', Transform='I', Groupby=''), 
 
-    data.frame(pretty.name='Region', Field.name='REGION', Abbreviation='REGION', Family=NA, Type='Predictor', Transform='I', Groupby=''),
+  data.frame(pretty.name='Region', Field.name='REGION', Abbreviation='REGION', Family=NA, Type='Predictor', Transform='I', Groupby=''),
     data.frame(pretty.name='NTR Pooled', Field.name='NTR.Pooled', Abbreviation='NTR.Pooled', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='LHC % (live hard coral cover)', Field.name='LHC_.', Abbreviation='LHC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='SC % (soft coral)', Field.name='SC_.', Abbreviation='SC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
@@ -47,7 +70,7 @@ var.lookup = rbind(
     data.frame(pretty.name='Cyclone', Field.name='Cyclone', Abbreviation='CYCLONE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Exposure to primary weeks', Field.name='Exposure.to.primary.weeks', Abbreviation='EXP', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Prey density', Field.name='Prey.density', Abbreviation='PREY.DENSITY', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='Prey biomass', Field.name='Prey.biomass', Abbreviation='PREY.BIOMASS', Family=NA, Type='Predictor', Transform='I', Groupby='Region')
+  data.frame(pretty.name='Prey biomass', Field.name='Prey.biomass', Abbreviation='PREY.BIOMASS', Family=NA, Type='Predictor', Transform='I', Groupby='Region')
 )
 save(var.lookup, file='data/var.lookup.RData') 
 names = with(var.lookup, setNames(as.character(Field.name), Abbreviation))
@@ -59,7 +82,7 @@ names = names[names(names)!=names]
 ## Create duplicates of the fields that are not already abbreviated 
 fish = fish %>%
     mutate(SSTmean=ifelse(as.character(SSTmean)=='#N/A',NA,as.numeric(as.character(SSTmean)))) %>%
-    mutate_at(as.character(var.lookup$Field.name), list(A=~I)) %>%
+    mutate_at(as.character(var.lookup$Field.name), list(A=~I(.))) %>%
     rename(!!! gsub('(.*)','\\1_A',names)) %>%
     mutate(REGION=factor(REGION, levels=c('Palm','Magnetic','Whitsunday','Keppel')))
 save(fish, file='data/fish.RData')
@@ -67,6 +90,16 @@ save(fish, file='data/fish.RData')
 
 
 ## Exploratory data analyses
+
+## ---- EDA.PCO1
+EDA_histograms(var='PCO1', dat=fish, var.lookup=var.lookup)
+EDA_density(var='PCO1', group='REGION', dat=fish, var.lookup=var.lookup)
+## ----end
+
+## ---- EDA.PCO2
+EDA_histograms(var='PCO2', dat=fish, var.lookup=var.lookup)
+EDA_density(var='PCO2', group='REGION', dat=fish, var.lookup=var.lookup)
+## ----end
 
 ## ---- EDA.TFD
 EDA_histograms(var='TFD', dat=fish, var.lookup=var.lookup)

@@ -51,6 +51,12 @@ for (i in 1:nrow(resp.lookup)) {
     if (resp %in% c('PI','PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
     if (resp %in% c('PTB','PLB')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.BIOMASS))
     analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
+    if (resp %in% c('PCO1', 'PCO2')) {
+      for (ff in 2:5) {
+        analyses[[resp]]$formulas[[ff]] = update(analyses[[resp]]$formulas[[ff]],  paste0(fun, '(', resp,'r', ') ~.'))
+      }
+    }
+    analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]]$formulas, USE.NAMES = TRUE,simplify=FALSE)
 }
 save(analyses, file='data/analyses.RData')
 ## ----end
@@ -73,10 +79,18 @@ for (a in 1:length(analyses)) {
             fish.sub[, as.character(get_response(analyses[[a]]$formulas[[f]]))] = fish.sub[,as.character(get_response(analyses[[a]]$formulas[[f]]))] + val
         }
         set.seed(123)
+        fish.sub = fish.sub %>% mutate_if(is.character,  as.factor)
         mod = abt(analyses[[a]]$formulas[[f]], data=fish.sub, distribution=analyses[[a]]$family,
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
                   var.monotone=as.vector(MONOTONE))
-        p=plot.abts(mod, var.lookup, center=FALSE, type='response', return.grid=TRUE,
+        if (f>1) {
+          var.lookup1 = var.lookup %>%
+            mutate(Field.name=ifelse(Field.name %in% c('PCO1', 'PCO2'), paste0(Field.name, 'r'), Field.name),
+                   Abbreviation=ifelse(Abbreviation %in% c('PCO1', 'PCO2'), paste0(Abbreviation, 'r'), Abbreviation))
+        } else {
+          var.lookup1 = var.lookup
+        }
+        p=plot.abts(mod, var.lookup1, center=FALSE, type='response', return.grid=TRUE,
                     groupby=na.omit(unique(analyses[[a]]$groups[[f]])),pt.size=14)#
         thresholds=p$thresholds
         save(thresholds, file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
@@ -114,7 +128,11 @@ for (a in 1:length(analyses)) {
         ps1 = arrangeGrob(ps[[1]],ps[[length(ps)]], widths=c(3,1))
         numberOfPlots = length(ps)-2 #minus 1 since one of the items is the legend and minus one for the relative importance plot
         numberOfPlotRows = ceiling(numberOfPlots / 2)
-        g=arrangeGrob(ps1, do.call('arrangeGrob', c(ps[c(-1, -length(ps))], list(ncol=2))), heights=c(2,numberOfPlotRows))
+        if (length(ps)<3) {
+          g=ps1 ##arrangeGrob(ps1, ps[2])    #do.call('arrangeGrob', c(ps[c(-1, -length(ps))], list(ncol=2))), heights=c(2,numberOfPlotRows))
+        } else {
+          g=arrangeGrob(ps1, do.call('arrangeGrob', c(ps[c(-1, -length(ps))], list(ncol=2))), heights=c(2,numberOfPlotRows))
+        }
         ggsave(filename=paste0('output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short.png'), g, width=10, height=2+(1.7*numberOfPlotRows), dpi=300)
         ggsave(filename=paste0('output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short.pdf'), g, width=10, height=2+(1.7*numberOfPlotRows))
 
@@ -137,7 +155,11 @@ for (a in 1:length(analyses)) {
         ggsave(filename=paste0('output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.pdf'), g, width=10, height=8)
         
         ## Version for vertical table of regional relative importance and substantial panels
-        g=do.call('arrangeGrob', c(ps[1:4], list(ncol=1, heights=c(1.5, rep(1,3)))))
+        if (length(ps)<2) {
+          g = ps[[1]]
+        } else {
+          g=do.call('arrangeGrob', c(ps[1:4], list(ncol=1, heights=c(1.5, rep(1,3)))))
+        }
                                         #save(g, file=paste0('data/g.abt_',mod_num,'_',resp,'.RData'))
         
                                         #save(data.all.abt, file=paste0('data/data.all.abt_',mod_num,'_',resp,'.RData'))

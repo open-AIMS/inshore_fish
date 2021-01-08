@@ -14,3 +14,5 @@ source('FISH_functions.R')
 
 
 source('FISH_data.R')
+source('FISH_gbm.R')
+source('FISH_spatial_gbm.R')
