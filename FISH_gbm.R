@@ -5,6 +5,7 @@ source('FISH_functions.R')
 ## ---- formulas
 formulas = list(
     all = ~REGION + NTR.Pooled + LHC + SC + MA + TURF + UC + BR + CMD + SLOPE + RUG + SCI + CHL + KD490 + SSTMEAN + SSTANOM + WAVE + DEPTH + DHW + CYCLONE + EXP,
+    all1 = ~NTR.Pooled + LHC + SC + MA + TURF + UC + BR + CMD + SLOPE + RUG + SCI + CHL + KD490 + SSTMEAN + SSTANOM + WAVE + DEPTH + DHW + CYCLONE + EXP,
     Palm = ~ NTR.Pooled + LHC + SC + MA + TURF + UC + BR + CMD + SLOPE + RUG + SCI + CHL + KD490 + SSTMEAN + SSTANOM + WAVE + DEPTH + DHW + CYCLONE + EXP,
     Magnetic = ~ NTR.Pooled + LHC + SC + MA + TURF + UC + BR + CMD + SLOPE + RUG + SCI + CHL + KD490 + SSTMEAN + SSTANOM + WAVE + DEPTH + DHW + CYCLONE + EXP,
     Whitsunday = ~ NTR.Pooled + LHC + SC + MA + TURF + UC + BR + CMD + SLOPE + RUG + SCI + CHL + KD490 + SSTMEAN + SSTANOM + WAVE + DEPTH + DHW + CYCLONE + EXP,
@@ -20,15 +21,18 @@ resp.lookup = var.lookup %>% filter(Type=='Response') %>% droplevels
 pred.lookup = var.lookup %>% filter(Type=='Predictor') %>% droplevels
 
 groupings.all = vector('list', nrow(pred.lookup))
+groupings.all1 = vector('list', nrow(pred.lookup))
 names(groupings.all) = pred.lookup$Abbreviation
 groupings.region = vector('list', nrow(pred.lookup))
 names(groupings.region) = pred.lookup$Abbreviation
 for (i in 1:nrow(pred.lookup)) {
     pred = as.character(pred.lookup[i,'Abbreviation'])
     groupings.all[[pred]] = ifelse(pred=='REGION',NA,'REGION')
+    groupings.all1[[pred]] = NA
     groupings.region[[pred]] = ifelse(pred=='NTR.Pooled',NA,'NTR.Pooled')
 }
 groupings.all = do.call('c',groupings.all)
+groupings.all1 = do.call('c',groupings.all1)
 groupings.region = do.call('c',groupings.region)
 
 gfun = function(f, form) {
@@ -36,6 +40,7 @@ gfun = function(f, form) {
     #print(form[[f]])
     form = attr(terms(form[[f]]),'term.labels')
     if (f=='all') return(groupings.all[form])
+    if (f=='all1') return(groupings.all1[form])
     else return(groupings.region[form])
 }
 
@@ -50,13 +55,13 @@ for (i in 1:nrow(resp.lookup)) {
                             'family' = fam)
     if (resp %in% c('PI','PTD','PLD')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.DENSITY))
     if (resp %in% c('PTB','PLB')) analyses[[resp]][['formulas']] = lapply(analyses[[resp]][['formulas']], function(f) f=update(f, .~.+PREY.BIOMASS))
-    analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
+    analyses[[resp]][['groups']] = sapply(c('all','all1','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]][['formulas']], USE.NAMES = TRUE,simplify=FALSE)
     if (resp %in% c('PCO1', 'PCO2')) {
-      for (ff in 2:5) {
+      for (ff in 3:6) {  # used to be 2:5 (as in the regions only)
         analyses[[resp]]$formulas[[ff]] = update(analyses[[resp]]$formulas[[ff]],  paste0(fun, '(', resp,'r', ') ~.'))
       }
     }
-    analyses[[resp]][['groups']] = sapply(c('all','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]]$formulas, USE.NAMES = TRUE,simplify=FALSE)
+    analyses[[resp]][['groups']] = sapply(c('all','all1','Palm','Magnetic','Whitsunday','Keppel'), gfun, form=analyses[[resp]]$formulas, USE.NAMES = TRUE,simplify=FALSE)
 }
 save(analyses, file='data/analyses.RData')
 ## ----end
@@ -67,11 +72,12 @@ save(analyses, file='data/analyses.RData')
 for (a in 1:length(analyses)) {
     resp=names(analyses)[a]
     print(paste('Response =',resp))
-    for (f in 1:length(analyses[[a]]$formulas)) {
+    ## for (f in 1:length(analyses[[a]]$formulas)) {
+    for (f in 2)) {  # temporary just so that we can run the new all1 set
         mod.name = names(analyses[[a]]$formulas)[f]
         print(paste('Model =',mod.name))
         MONOTONE = assignMonotone(fish, analyses[[a]]$formulas[[f]])
-        if (mod.name=='all') {fish.sub=fish
+        if (mod.name %in% c('all','all1')) {fish.sub=fish
         } else {fish.sub = fish %>% filter(REGION==mod.name)}
         if (any(fish.sub[,as.character(get_response(analyses[[a]]$formulas[[f]]))]==0)) {
             val = fish.sub[, as.character(get_response(analyses[[a]]$formulas[[f]]))]
@@ -83,20 +89,22 @@ for (a in 1:length(analyses)) {
         mod = abt(analyses[[a]]$formulas[[f]], data=fish.sub, distribution=analyses[[a]]$family,
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
                   var.monotone=as.vector(MONOTONE))
-        if (f>1) {
+        if (f>2) {  # used to be f>1 (so only applies to the regional models)
           var.lookup1 = var.lookup %>%
             mutate(Field.name=ifelse(Field.name %in% c('PCO1', 'PCO2'), paste0(Field.name, 'r'), Field.name),
                    Abbreviation=ifelse(Abbreviation %in% c('PCO1', 'PCO2'), paste0(Abbreviation, 'r'), Abbreviation))
         } else {
           var.lookup1 = var.lookup
         }
+        gr <- na.omit(unique(analyses[[a]]$groups[[f]]))
+        if (is.logical(gr)) gr=NULL
         p=plot.abts(mod, var.lookup1, center=FALSE, type='response', return.grid=TRUE,
-                    groupby=na.omit(unique(analyses[[a]]$groups[[f]])),pt.size=14)#
+                    groupby=gr,pt.size=14)#
         thresholds=p$thresholds
         save(thresholds, file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
         ps = p[['ps']]
         p = p[['p']]
-        if (length(levels(fish$REGION))>1 || length(levels(fish$NTR.Pooled))>1) {
+        if ((length(levels(fish$REGION))>1 || length(levels(fish$NTR.Pooled))>1) & mod.name!='all1') {
             p = common_legend(p)
             ps = common_legend(ps)
         }

@@ -27,7 +27,7 @@ for (a in 1:length(new_analyses)) {
         mod.name = names(new_analyses[[a]]$formulas)[f]
         print(paste('Model =',mod.name))
 
-        if (mod.name=='all') {fish.sub=fish
+        if (mod.name %in% c('all','all1')) {fish.sub=fish
         } else {fish.sub = fish %>% filter(REGION==mod.name)}
         if (any(fish.sub[,as.character(get_response(analyses[[a]]$formulas[[f]]))]==0)) {
             val = fish.sub[, as.character(get_response(analyses[[a]]$formulas[[f]]))]
@@ -46,6 +46,7 @@ for (a in 1:length(new_analyses)) {
         ##wch=rel.inf$Var[which(as.numeric(rel.inf$Mean.rel.inf)> (100/nrow(rel.inf)))]
         wch=rel.inf$Var
         if(f==1) wch = unique(c(wch, 'REGION'))
+        ## if(f==2) wch=unique(wch)
         if(f>1) wch = unique(c(wch, 'NTR.Pooled'))
         wch.n = wch[unlist(lapply(wch, function(x) is.numeric(fish.sub[,x])))]
         wch.c = wch[unlist(lapply(wch, function(x) is.factor(fish.sub[,x])))]
@@ -148,9 +149,14 @@ for (a in 1:length(new_analyses)) {
             if (n %in% wch.n) {
                 new_analyses[[a]]$groups[[f]] = c(new_analyses[[a]]$groups[[f]], setNames(new_analyses[[a]]$groups[[f]][n], paste0(n,'.t')))
                 new_analyses[[a]]$groups[[f]] = c(new_analyses[[a]]$groups[[f]], setNames(new_analyses[[a]]$groups[[f]][n], paste0(n,'.s')))
+
+                wwch = which(names(new_analyses[[a]]$groups[[f]])=='NTR.Pooled')
+                if (mod.name=='all1') new_analyses[[a]]$groups[[f]][-wwch] <- 'NTR.Pooled'
+                ## if (mod.name=='all1') new_analyses[[a]]$groups[[f]] <- 'NTR.Pooled'
                 new_analyses[[a]]$groups[[f]] = new_analyses[[a]]$groups[[f]][-which(names(new_analyses[[a]]$groups[[f]])==n)]
             }
         }
+
         pred.1=stats.abt(mod, fitMethod=1, analysis = new_analyses[[a]]$groups[[f]])
         rel.inf = summarize_values(pred.1$rel.imp, type='Rel.inf') %>%
             dplyr::rename_at(vars(-contains('Var')), paste0, '.rel.inf')
@@ -199,16 +205,17 @@ for (a in 1:length(new_analyses)) {
         ## Modify the analysis groups to incorporate just the selected spatial versions.
         new_analyses[[a]]$groups[[f]] = new_analyses[[a]]$groups[[f]][which(names(new_analyses[[a]]$groups[[f]]) %in% VARS)]
 
-        if (f>1) {
+        if (f>2) {
           var.lookup1 = var.lookup %>%
             mutate(Field.name=ifelse(Field.name %in% c('PCO1', 'PCO2'), paste0(Field.name, 'r'), Field.name),
                    Abbreviation=ifelse(Abbreviation %in% c('PCO1', 'PCO2'), paste0(Abbreviation, 'r'), Abbreviation))
         } else {
           var.lookup1 = var.lookup
         }
-
+        gr <- na.omit(unique(new_analyses[[a]]$groups[[f]]))
+        if (is.logical(gr)) gr <- NULL
         p=plot.abts(mod, var.lookup1, center=FALSE, type='response', return.grid=TRUE,
-                    groupby=na.omit(unique(new_analyses[[a]]$groups[[f]])),pt.size=14,
+                    groupby=gr, pt.size=14,
                     mins=new_analyses[[a]]$mins[['spatial']],
                     maxs=new_analyses[[a]]$maxs[['spatial']])#
         thresholds=p$thresholds
@@ -313,7 +320,6 @@ for (a in 1:length(new_analyses)) {
 #save(new_analyses, file='data/new_analyses.RData')
 save(new_analyses, file='data/new_analyses1.RData')
 ## ----end
-
 
 
 fish.sub3 = fish.sub1 %>% full_join(fish.sub2) %>% full_join(fish.sub) %>% ungroup
