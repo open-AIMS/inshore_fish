@@ -1,0 +1,523 @@
+---
+title: "Inshore fish analysis - spatial patterns: Group level"
+author: "Murray Logan"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: hide
+    collapse: no
+    df_print: paged
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+    css: resources/style.css
+  pdf_document:
+    df_print: default
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    latex_engine: xelatex
+    number_sections: yes
+    toc_depth: 2
+  word_document:
+    fig_caption: yes
+    fig_height: 4
+    fig_width: 4
+    highlight: tango
+    toc: yes
+    toc_depth: 2
+output_dir: "docs"
+documentclass: article
+fontsize: 12pt
+mainfont: Arial
+mathfont: LiberationMono
+monofont: DejaVu Sans Mono
+classoption: a4paper
+bibliography: resources/references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning=FALSE, message=FALSE)
+knitr::read_chunk('FISH_spatial_main.R')
+knitr::read_chunk('FISH_functions.R')
+knitr::read_chunk('FISH_data.R')
+knitr::read_chunk('FISH_gbm.R')
+knitr::read_chunk('FISH_spatial_gbm.R')
+```
+
+Preparations
+================
+
+```{r Libraries, results='markdown', eval=TRUE}
+```
+
+<details><summary>Raw fish data</summary>
+```{r readFish, results='markdown', eval=TRUE}
+```
+```{r AddPCO, results='markdown', eval=TRUE}
+```
+```{r nameLookup, results='markdown', eval=TRUE}
+```
+```{r AbbreviatedNames, results='markdown', eval=TRUE, cache=TRUE, dependson=c('readFish','AddPCO','nameLookup 1 2')}
+```
+</details>
+
+
+## Response Variables:
+
+| Variable                   | Data field                    | Abbreviation | Distribution   |
+|:---------------------------|:------------------------------|--------------|:---------------|
+| Total density              | `Total.fish.density`          | TFD          | Gaussian (log) |
+| Total species richness     | `Total.fish.species.richness` | TFSR         | Gaussian       |
+| Benthic invertivores       | `BE`                          | BE           | Gaussian (log) |
+| Grazers                    | `GRAZ`                        | GRAZ         | Gaussian (log) |
+| Corallivores               | `COR`                         | COR          | Gaussian (log) |
+| Omnivores                  | `OM`                          | OM           | Gaussian (log) |
+| Planktivores               | `PL`                          | PL           | Gaussian (log) |
+| Carnivores                 | `CA`                          | CA           | Gaussian (log) |
+| Piscivores                 | `PI`                          | PI           | Gaussian (log) |
+| Farmers                    | `FA`                          | FA           | Gaussian (log) |
+| Plectropomus total density | `Plectropomus.total.density`  | PTD          | Gaussian (log) |
+| Plectropomus total biomass | `Plectropomus.total.biomass`  | PTB          | Gaussian (log) |
+| Plectropomus legal density | `Plectropomus.legal.density`  | PLD          | Gaussian (log) |
+| Plectropomus legal biomass | `Plectropomus.legal.biomass`  | PLB          | Gaussian (log) |
+| PCO1                       | `PCO1`                        | PCO1         | Identity       |
+
+<!--
+### Exploratory data analyses {.tabset .tabset-faded}
+
+```{r EDA.histograms, results='markdown', eval=TRUE}
+```
+```{r EDA.density, results='markdown', eval=TRUE}
+```
+
+#### Total density
+```{r EDA.TFD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Total species richness
+```{r EDA.TFSR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Benthic invertivores
+```{r EDA.BE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Grazers
+```{r EDA.GRAZ, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Grazers2
+```{r EDA.GRAZ2, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Parrot
+```{r EDA.PA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Corallivores
+```{r EDA.COR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Omnivores
+```{r EDA.OM, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Planktivores
+```{r EDA.PL, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Carnivores
+```{r EDA.CA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Piscivores
+```{r EDA.PI, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Farmers
+```{r EDA.FA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus total density
+```{r EDA.PTD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus total biomass
+```{r EDA.PTB, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus legal density
+```{r EDA.PLD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Plectropomus legal biomass
+```{r EDA.PLB, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+--> 
+
+
+## Predictor Variables:
+
+| Variable                      | Data field                  | Abbreviation |
+|:------------------------------|:----------------------------|:-------------|
+| Region                        | `REGION`                    | REGION       |
+| NTR Pooled                    | `NTR.Pooled`                | NTR.Pooled   |
+| LHC % (live hard coral cover) | `LHC_.`                     | LHC          |
+| SC % (soft coral)             | `SC_.`                      | SC           |
+| MA % (macroalgal cover)       | `MAC_.`                     | MA           |
+| Turf %                        | `Turf_.`                    | TURF         |
+| Unconsolidated %              | `Unconsolidated_.`          | UC           |
+| Benthic richness              | `Benthic.richness`          | BR           |
+| Coral morphological diversity | `Coral_Morph.Diversity`     | CMD          |
+| Slope                         | `slope`                     | SLOPE        |
+| Rugosity                      | `rugosity`                  | RUG          |
+| SCI (structural complexity)   | `SCI`                       | SCI          |
+| Chla                          | `ChlA`                      | CHL          |
+| Kd490                         | `kd490`                     | KD490        |
+| SST mean                      | `SSTmean`                   | SSTMEAN      |
+| SST anom                      | `SSTanom`                   | SSTANOM      |
+| Wave exposure                 | `wave.exposure.index`       | WAVE         |
+| Corrected depth               | `Corrected.depth`           | DEPTH        |
+| Max DHW                       | `maxDHW`                    | DHW          |
+| Cyclone                       | `Cyclone`                   | CYCLONE      |
+| Exposure to primary weeks     | `Exposure.to.primary.weeks` | EXP          |
+|                               |                             |              |
+
+FOR Plectropomus response variables ONLY, add:
+
+| Variable                                                  | Data field     | Abbreviation |
+|:----------------------------------------------------------|:---------------|:-------------|
+| Prey density (for Plectropomus density and legal density) | `Prey.density` | PREY.DENSITY |
+| Prey biomass (for Plectropomus biomass and legal biomass) | `Prey.biomass` | PREY.BIOMASS |
+
+Species-specific analyses: list of species in the attached file. There are two
+lists there: the single-column list is for the initial analysis between
+regions, and the table is for the species lists to use for each region
+individually.
+
+<details><summary>Raw selections data</summary>
+```{r readSelections, results='markdown', eval=TRUE}
+```
+</details>
+
+
+<!--
+### Exploratory data analyses {.tabset .tabset-faded}
+
+#### Total density
+```{r EDA.REGION, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### NTR Polled
+```{r EDA.NTR.Pooled, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### LHC % (live hard coral cover)
+```{r EDA.LHC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SC % (soft coral)
+```{r EDA.SC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### MA % (macroalgal cover)
+```{r EDA.MA, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Turf %
+```{r EDA.TURF, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Unconsolidated %
+```{r EDA.UC, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Benthic richness
+```{r EDA.BR, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Coral morphological diversity
+```{r EDA.CMD, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Slope
+```{r EDA.SLOPE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Rugosity
+```{r EDA.RUG, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SCI (structural complexity)
+```{r EDA.SCI, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Chlorophyl-a
+```{r EDA.CHL, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Kd490
+```{r EDA.KD490, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SST mean
+```{r EDA.SSTMEAN, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### SST anomoly
+```{r EDA.SSTANOM, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Wave exposure
+```{r EDA.WAVE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Corrected Depth
+```{r EDA.DEPTH, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Max DHW
+```{r EDA.DHW, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Cyclone
+```{r EDA.CYCLONE, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Explore to primary water (weeks)
+```{r EDA.EXP, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Prey density (for Plectropomus density and legal density)
+```{r EDA.PREY.DENSITY, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+#### Prey biomass (for Plectropomus density and legal density)
+```{r EDA.PREY.BIOMASS, results='markdown', eval=TRUE, fig.width=7, fig.height=3, cache=TRUE, dependson='AbbreviatedNames'}
+```
+
+-->
+
+Directions
+===============
+
+Based on the outcomes of a series of boosted regression trees that incorporated all predictors (including both spatial and temporal
+components of some of the major predictors), we collectively decided to split the analyses up into predominantly spatial and 
+predominantly temporal predictors - so as to help focus the stories.
+
+After providing a full analysis that will be used to narrow down the important spatial predictors, this analysis will focus on the spatial components.
+
+
+~~~
+Hi Murray,
+Everyone seems keen to split the papers. I'm planning to focus on the
+spatial story first. Could you please run the BRTs again - with just
+those response variables that either had a stronger spatial signal, or
+were equally important spatially and temporally?
+Please let me know if you need the data files again - they haven't
+changed.
+To recap:
+
+Response Variables
+
+Total density
+Total species richness
+
+BE - Benthic invertivores
+GRAZ2 - Grazers
+Parrot - Parrotfish
+COR - Corallivores
+OM - Omnivores
+PL - Planktivores
+CA - Carnivores
+PI - Piscivores
+FA - Farmers
+
+Species-specific analyses: list of species as before.
+
+Predictor Variables
+
+Region
+NTR Pooled
+
+MA % (macroalgal cover)
+Unconsolidated %
+Coral morphological diversity
+
+Chla
+Kd490
+Wave exposure
+Corrected depth
+Max DHW
+Exposure to primary weeks
+
+Cheers
+Dani
+~~~
+
+
+Results - full analyses {.tabset .tabset-faded}
+===========
+
+When running the full analyses, the substantially influential predictors for any single analysis
+are identified.  These predictors are then expressed as their spatial and temporal components by
+centering them against their respective temporal (for each location) and spatial (for each year) 
+means.  The analyses are then repeated using just the important (spatial and temporal) versions of the 
+influential predictors.  These later analyses are used to identify which predictors should feature in
+spatially focussed (and later temporally focussed) analyses.
+Finally, the spatial and temporal versions of the influential predictors are combined with all other
+predictors and the analyses are re-run as an alternative way to identify predictors should feature in
+spatially focussed (and later temporally focussed) analyses.
+
+```{r formulas, results='markdown', eval=TRUE}
+```
+
+```{r analysis.list, results='markdown', eval=TRUE}
+```
+
+```{r ABT, results='markdown', eval=FALSE}
+```
+ 
+  
+```{r name, results='asis', eval=FALSE}
+load('data/var.lookup.RData')
+resp.lookup = var.lookup %>% filter(Type=='Response') %>% droplevels
+mods = names(formulas)
+for (a in 1:length(analyses)) {
+    resp=names(analyses)[a]
+    cat(paste('## ',resp.lookup$pretty.name[resp.lookup$Abbreviation==resp],' {.tabset .tabset-pills} \n\n'))
+    for (f in 1:length(analyses[[a]]$formulas)) {
+        mod.name = names(analyses[[a]]$formulas)[f]
+        cat(paste('### ',mod.name,'\n\n'))
+        cat(paste0('![](output/figures/data.all.abt.',mod.name,'_',resp,'_ABT_short_in.png)\n\n'))
+        ## Now for a tables
+        load(file=paste0('data/stats_',mod.name,'_',resp,'.RData'))
+        pretty.stats(stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+        load(file=paste0('data/thresholds_',mod.name,'_',resp,'.RData'))
+        pretty.thresholds(thresholds, stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+    }
+}
+```
+
+Results - spatial focus {.tabset .tabset-faded}
+===========
+
+```{r name1, results='asis', eval=TRUE}
+load('data/var.lookup_spatial.RData')
+#load(file='data/new_analyses.RData')
+load(file='data/analyses.RData')
+new_analyses=analyses
+resp.lookup = var.lookup %>% filter(Type=='Response') %>% droplevels
+mods = names(formulas)
+for (a in 1:length(new_analyses)) {
+    resp=names(new_analyses)[a]
+    cat(paste('## ',resp.lookup$pretty.name[resp.lookup$Abbreviation==resp],' {.tabset .tabset-pills} \n\n'))
+    for (f in 1:length(new_analyses[[a]]$formulas)) {
+        mod.name = names(new_analyses[[a]]$formulas)[f]
+        cat(paste('### ',mod.name,'\n\n'))
+        cat(paste0('![](output/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_short_in.png)\n\n'))
+        ## Now for a tables
+        load(file=paste0('data/stats_spatial_',mod.name,'_',resp,'.RData'))
+        pretty.stats(stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat
+        load(file=paste0('data/thresholds_spatial_',mod.name,'_',resp,'.RData'))
+        pretty.thresholds(thresholds, stats, var.lookup) %>% rmarkdown:::paged_table_html() %>% cat 
+    }
+}
+```
+
+# Heatmaps {.tabset .tabset-faded}
+
+```{r heatmap, results='asis', eval=TRUE, echo=FALSE}
+stats.all <- NULL
+for (a in 1:length(new_analyses)) {
+    resp=names(new_analyses)[a]
+    ## print(paste('Response =',resp))
+    for (f in 1:length(new_analyses[[a]]$formulas)) {
+        #new_analyses = analyses
+        mod.name = names(new_analyses[[a]]$formulas)[f]
+        ## print(paste('Model =',mod.name))
+        ## get the polarity of the effects
+        load(file=paste0('data/pred.1_',mod.name,'_',resp,'.RData'))
+        Polarity <- function(i,df) {
+            if(is.numeric(df[,i])) {
+                df %>% arrange(!!sym(i)) %>% summarise(Polarity=ifelse(first(y)>last(y), 'Decrease','Increase')) %>%
+                    mutate(Var=paste0(i,'.s'))
+            } else {
+                df %>% group_by(!!sym(i)) %>% summarise(y=mean(y)) %>% ungroup %>%
+                    summarise(Polarity=ifelse(first(y)>last(y), 'Decrease','Increase')) %>%
+                    mutate(Var=i)
+            }
+        }
+        polarity <- pred.1$fit$Boot1 %>%
+            purrr::imap_dfr(~Polarity(.y,.x), id='Var')
+        ## polarity <- pred.1$fit$Boot1 %>%
+        ##     purrr::map_dfr(~.x %>% summarise(Polarity=ifelse(first(y)>last(y), 'Decrease','Increase')),
+        ##                    .id='Var')
+        load(file=paste0('data/stats_spatial_',mod.name,'_',resp,'.RData'))
+        ## load(file=paste0('data/stats_spatial_temporal_',mod.name,'_',resp,'.RData'))
+        stats.all <- rbind(stats.all,
+                           stats %>% mutate(Model=mod.name, Resp=resp) %>%
+                           left_join(polarity)
+                           ) 
+    }
+}
+save(stats.all, file=paste0('data/stats.all.RData'))
+for (m in unique(stats.all$Model)) {
+    cat(paste0('## ',m,'\n\n'))
+    stats.all.sum <-
+        stats.all %>% dplyr::select(Var, Model, Resp, Polarity, Mean.R2) %>%
+        filter(!Resp %in% c('PTB','PLD','PTD','PTB','PLB')) %>%
+        filter(Model==m) %>% droplevels() %>%
+        left_join(var.lookup %>% dplyr::filter(Type=='Response') %>% dplyr::select(Resp=Abbreviation, Response=pretty.name)) %>%
+        filter(Resp!='GRAZ') %>%
+        mutate(Resp=forcats::fct_relevel(Resp, 'TFD', 'TFSR', 'PCO1'),
+               Response=stringr::str_wrap(Response, '\n'),
+               Response=ifelse(Response=='Grazers2', 'Grazers',Response),
+               Response=ifelse(Response=='Parrot', 'Parrotfish',Response),
+               Response=fct_reorder(Response,as.numeric(Resp))
+               ) %>%
+        left_join(var.lookup %>% dplyr::filter(Type=='Predictor') %>% dplyr::select(Var=Abbreviation, Variable=pretty.name)) %>% 
+        mutate(Var=forcats::fct_relevel(Var, 'REGION', 'SSTMEAN.s','SSTANOM.s','DHW.s','WAVE.s','CYCLONE.s','DEPTH.s','CHL.s','KD490.s','EXP.s',
+                                        'SLOPE.s','RUG.s','SCI.s','BR.s','CMD.s','LHC.s','SC.s','MA.s','TURF.s','UC.s','PREY.DENSITY.s','PREY.BIOMASS.s','NTR.Pooled'),
+               Variable=ifelse(Variable=='Exposure to primary weeks','Exposure to primary water', Variable),
+               Variable=forcats::fct_reorder(Variable,as.numeric(Var)),
+               Variable=forcats::fct_rev(Variable)) 
+    segs <- expand.grid(y=0:length(unique(stats.all.sum$Var)),
+                        x=0:length(unique(stats.all.sum$Resp)))
+
+    g1 <- stats.all.sum %>%
+        ggplot() +
+        geom_tile(aes(y=Variable, x=Response, fill=Polarity, alpha=as.numeric(as.character(Mean.R2)))) +
+        geom_segment(data=segs %>% arrange(x,y), aes(y=y+0.5, yend=lag(y)+0.5, x=x+0.5, xend=x+0.5))+
+        geom_segment(data=segs %>% arrange(y,x), aes(y=y+0.5, yend=y+0.5, x=x+0.5, xend=lag(x)+0.5))+
+        ## geom_tile(aes(y=Var, x=Resp, fill=as.numeric(as.character(Mean.R2)))) +
+        ## scale_fill_gradientn('R-squared',colors=rev(heat.colors(10))) +
+        scale_fill_manual('Polarity',values=c('red','green')) +
+        scale_alpha_continuous('R-squared', limits=c(0,1)) +
+        scale_x_discrete('Responses',position='top') +
+        scale_y_discrete('Predictors') +
+        coord_cartesian(expand=c(0,0)) +
+        theme_bw() +
+        theme(axis.title=element_text(size=rel(1.5)),
+              panel.grid.major = element_blank(),
+              legend.position = 'bottom',
+              legend.title.align = 0.5,
+              legend.margin = ggplot2::margin(t=0,b=0,l=20,r=20, unit='pt')) #+
+        #guides(fill=guide_legend(title.position = 'top'),
+        #       alpha=guide_legend(title.position='top'))
+    g1    
+    
+    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.png'), g1, width=13, height=10, dpi=300)
+    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.pdf'), g1, width=13, height=10)
+    cat(paste0('![](output/figures/spatial.heatmap_',m,'.png)\n\n'))
+}
+```
+
+
