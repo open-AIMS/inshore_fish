@@ -444,11 +444,12 @@ for (a in 1:length(new_analyses)) {
         mod.name = names(new_analyses[[a]]$formulas)[f]
         ## print(paste('Model =',mod.name))
         ## get the polarity of the effects
-        load(file=paste0('data/pred.1_',mod.name,'_',resp,'.RData'))
+        load(file=paste0('data/pred.1_spatial_',mod.name,'_',resp,'.RData'))
         Polarity <- function(i,df) {
             if(is.numeric(df[,i])) {
                 df %>% arrange(!!sym(i)) %>% summarise(Polarity=ifelse(first(y)>last(y), 'Decrease','Increase')) %>%
-                    mutate(Var=paste0(i,'.s'))
+                    ## mutate(Var=paste0(i,'.s'))
+                    mutate(Var=i)
             } else {
                 df %>% group_by(!!sym(i)) %>% summarise(y=mean(y)) %>% ungroup %>%
                     summarise(Polarity=ifelse(first(y)>last(y), 'Decrease','Increase')) %>%
