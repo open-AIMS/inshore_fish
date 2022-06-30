@@ -14,6 +14,24 @@ formulas = list(
 
 ## ----end
 
+## For each response, there are four models:
+## - all - a full model with all regions
+## - Palm - a Palm model
+## - Magnetic - a Magnetic model
+## - Whitsunday - a Whitsunday model
+## - Keppel - a Keppel model
+
+## In addition, there is a all1 model that is a full model (all
+## regions), yet does not include a Region predictor.  The reason for
+## this is that within the gbm, continuous predictors that vary
+## between regions will likely be dominated by the Region predictor -
+## that is the model will learn regional pattern from the Region
+## predictor (as it is a factor and factors tend to be 'win').
+## However, the purpose of the analyses is to explore the drivers of
+## regional differences and therefore we are less interested in
+## indicating that the regions are different than we are in indicating
+## the possible drivers of these differences
+
 ## ---- analysis.list
 load('data/fish.RData')
 load('data/var.lookup.RData')
@@ -73,7 +91,7 @@ for (a in 1:length(analyses)) {
     resp=names(analyses)[a]
     print(paste('Response =',resp))
     ## for (f in 1:length(analyses[[a]]$formulas)) {
-    for (f in 2)) {  # temporary just so that we can run the new all1 set
+    for (f in 2) {  # temporary just so that we can run the new all1 set
         mod.name = names(analyses[[a]]$formulas)[f]
         print(paste('Model =',mod.name))
         MONOTONE = assignMonotone(fish, analyses[[a]]$formulas[[f]])
@@ -89,7 +107,7 @@ for (a in 1:length(analyses)) {
         mod = abt(analyses[[a]]$formulas[[f]], data=fish.sub, distribution=analyses[[a]]$family,
                   cv.folds=10,interaction.depth=10,n.trees=10000, shrinkage=0.001, n.minobsinnode=2,
                   var.monotone=as.vector(MONOTONE))
-        if (f>2) {  # used to be f>1 (so only applies to the regional models)
+        if (f>2) {  # only applies to the regional models
           var.lookup1 = var.lookup %>%
             mutate(Field.name=ifelse(Field.name %in% c('PCO1', 'PCO2'), paste0(Field.name, 'r'), Field.name),
                    Abbreviation=ifelse(Abbreviation %in% c('PCO1', 'PCO2'), paste0(Abbreviation, 'r'), Abbreviation))

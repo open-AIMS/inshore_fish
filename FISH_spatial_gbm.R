@@ -12,6 +12,9 @@ load('data/var.lookup.RData')
           mutate(Field.name=paste0(Field.name,'.s'),
                  Abbreviation=paste0(Abbreviation,'.s')))
 save(var.lookup, file='data/var.lookup_spatial.RData')
+
+## There is also a need to alter the levels of NTR.Pooled
+fish <- fish %>% mutate(NTR.Pooled = factor(ifelse(NTR.Pooled == 'NTR', 'NTMR', as.character(NTR.Pooled))))
 ## ----end
 
 
@@ -19,7 +22,9 @@ save(var.lookup, file='data/var.lookup_spatial.RData')
 load(file='data/analyses.RData')
 new_analyses = analyses
 #fish.sub=fish.sub %>% as.data.frame
-for (a in 1:length(new_analyses)) {
+## for (a in 1:length(new_analyses)) {
+## for (a in c(1,2,17)) {
+for (a in c(17)) {
     resp=names(new_analyses)[a]
     print(paste('Response =',resp))
     for (f in 1:length(new_analyses[[a]]$formulas)) {
@@ -226,6 +231,8 @@ for (a in 1:length(new_analyses)) {
             p = common_legend(p)
             ps = common_legend(ps)
         }
+        save(p, file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT.RData'))
+        save(ps, file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_ps.RData'))
         ## version for the supplimentary
                                         #do.call('grid.arrange', p) ## version for the supplimentary
         ggsave(filename=paste0('output/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT.png'), do.call('grid.arrange', p), width=15, height=10, dpi=300)
@@ -277,8 +284,12 @@ for (a in 1:length(new_analyses)) {
         g= ps[[1]] +
             #scale_y_continuous(limits=c(0,max(50,max(pretty(as.numeric(as.character(stats$upper.rel.inf))))))) +
             annotation_custom(grob=ps2, xmin=1, xmax=xmax, ymin=ymin, ymax=Inf)
+        save(g, file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_short_in.png'))
         ggsave(filename=paste0('output/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_short_in.png'), g, width=10, height=8, dpi=300)
         ggsave(filename=paste0('output/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_short_in.pdf'), g, width=10, height=8)
+        ggsave(filename=paste0('output/figures/data.all.abt_spatial.',mod.name,'_',resp,'_ABT_short_in_ms.pdf'),
+               g + theme(text = element_text(size = 18)),
+               width=10, height=10/1.6)
 
         ## Version for vertical table of regional relative importance and substantial panels
         g=do.call('arrangeGrob', c(ps[1:4], list(ncol=1, heights=c(1.5, rep(1,3)))))
@@ -321,6 +332,174 @@ for (a in 1:length(new_analyses)) {
 save(new_analyses, file='data/new_analyses1.RData')
 ## ----end
 
+## Make a version of the figure for the maniscript
+## ---- MS version of plots
+library(patchwork)
+annotate_npc <- function(label, x, y, ...)
+{
+  ggplot2::annotation_custom(grid::textGrob(
+    x = unit(x, "npc"), y = unit(y, "npc"), label = label, ...))
+}
+## annotate_npc <- function(label, x, y, ...)
+## {
+##     ggplot2::annotation_custom(grid::grobTree(grid::rectGrob(gp = gpar(fill = 'white')),
+##                                               grid::textGrob(
+##     x = unit(x, "npc"), y = unit(y, "npc"), label = label, ...)))
+## }
+
+mod.name <- "all1"
+resps <- c('TFD', 'TFSR', 'PCO1')
+G <- vector('list', length(resps))
+G1 <- vector('list', length(resps))
+titles <- c(TFD = 'a) Total density (x1000)',
+            TFSR = 'b) Total species richness',
+            PCO1 = 'c) PC01 (species composition)'
+            )
+for (r in resps) {
+    load(file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_',r,'_ABT.RData'))
+    load(file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_',r,'_ABT_ps.RData'))
+    load(file=paste0('data/stats_spatial_',mod.name,'_', r,'.RData'))
+    ## label_lookups <- tribble(
+    ##     ~Old_label, ~New_label,
+    ##     "MA % (macroalgal cover)", "% macroalgae",
+    ##     )
+    
+    ## gT <- ggplotGrob(ps[[1]]) 
+    ## gT$grobs[[3]]$children
+    ## for (k in 2:(length(ps)-1)) {
+    ##     gT <- ggplotGrob(ps[[k]]) 
+    ##     oldlabel <- gT$grobs[[12]]$children[[1]]$label
+    ##     newlabel <- label_lookups %>% filter(Old_label == oldlabel) %>% pull(New_label)
+    ##     if (length(newlabel)==1) gT$grobs[[12]]$children[[1]]$label <- newlabel
+    ##     grid.draw(gT)
+    ##     ## ps[[k]] <- wrap_ggplot_grob(gT)
+    ##     ps[[k]] <- ggplotify::as.ggplot(gT)
+    ## } 
+    
+    ymin <- 100/(length(p)-2) * 1.05
+    ymax = ymin * 4
+    ps[[1]] = ps[[1]] + scale_y_continuous('Relative Importance', limits=c(0,ymax))
+    ps[2:(length(ps)-1)]=lapply(ps[2:(length(ps)-1)], function(f) f+theme(axis.title.y=element_blank(), text = element_text(size = 11)))
+    if (r == resps[[1]]) {
+        yymax <- 0
+        for ( k in 2:(length(ps)-1)) {
+            yymax = ifelse(yymax < max(ps[[k]]$data$hi), max(ps[[k]]$data$hi), yymax)
+        }
+        ps[2:(length(ps)-1)]=lapply(ps[2:(length(ps)-1)], function(f) f+scale_y_continuous('', limits = c(0, max(pretty(yymax))), labels = function(x) x/1000))
+    }
+    g1 <- ps[[1]]
+    g2 <- wrap_plots(ps[c(-1,-length(ps))], ncol = 2, byrow = TRUE)
+    if((length(ps)-2)%%2 >0)
+        g2 <- wrap_plots(append(ps[c(-1,-length(ps))], list(plot_spacer() + theme(plot.background = element_blank())), after = 0), ncol = 2, byrow = TRUE,)
+
+    top <- ceiling(((length(ps)-2)/2))*30/100
+    
+    if (r == resps[[1]]) {
+        G[[r]] <- g1 +
+            theme(plot.margin = ggplot2::margin(t = 0, r=0, b = 2, l = 0, unit = 'lines')) +
+            annotation_custom(rectGrob(y = unit(1, 'npc'), x = unit(0, 'npc'), width = unit(1, 'npc'), height = unit(0.15, 'npc'), gp = gpar(col = NA, fill = 'white'))) +
+            annotate_npc(x = 0.02, y = 0.99, label = titles[r], hjust = 0, vjust = 1, gp = gpar(fill = 'white')) +
+            inset_element(g2,
+                          left=0.3, #convertX(unit(13, 'native'), unitTo='npc'),
+                          bottom = 0.01,#convertX(unit(1, 'native'), unitTo='npc'),
+                          right = 0.95,
+                          top = (top+0.01)) +
+            inset_element(ps[[length(ps)]], left = 0.5, bottom = 0.4, right = 0.7, top = 0.7)
+    } else {
+        G[[r]] <- g1 +
+            ## plot_annotation(tag_levels = titles[r]) +
+            annotation_custom(rectGrob(y = unit(1, 'npc'), x = unit(0, 'npc'), width = unit(1, 'npc'), height = unit(0.15, 'npc'), gp = gpar(col = NA, fill = 'white'))) +
+            annotate_npc(x = 0.02, y = 0.99, label = titles[r], hjust = 0, vjust = 1, gp = gpar(fill = 'white')) +
+            inset_element(g2,
+                          left= 0.3, #convertX(unit(13, 'native'), unitTo='npc'),
+                          bottom = 0.01,#convertX(unit(1, 'native'), unitTo='npc'),
+                          right = 0.95,
+                          top = (top+0.01))
+    }
+
+    top <- 0.3 * ifelse((length(ps)-2)>3, 3, length(ps)-2)
+    left <- 0.3 * ifelse((length(ps)-2) >3, 1, 2)
+    g2 <- wrap_plots(ps[c(-1,-length(ps))], ncol = 1, byrow = TRUE)
+    if((length(ps)-2)%%2 >0) {
+        g2 <- wrap_plots(append(ps[c(-1,-length(ps))], list(plot_spacer() + theme(plot.background = element_blank())), after = 0), ncol = 2, byrow = TRUE,)
+    }
+    if (r == resps[[1]]) {
+        G1[[r]] <- g1 +
+            ## plot_annotation(tag_levels = titles[r]) +
+            annotation_custom(rectGrob(y = unit(1, 'npc'), x = unit(0, 'npc'), width = unit(1, 'npc'), height = unit(0.15, 'npc'), gp = gpar(col = NA, fill = 'white'))) +
+            annotate_npc(x = 0.02, y = 0.99, label = titles[r], hjust = 0, vjust = 1, gp = gpar(fill = 'white')) +
+            inset_element(g2,
+                          left=left, #convertX(unit(13, 'native'), unitTo='npc'),
+                          bottom = 0.01,#convertX(unit(1, 'native'), unitTo='npc'),
+                          right = 0.95,
+                          top = (top+0.01)) +
+            inset_element(ps[[length(ps)]], left = 0.65, bottom = 0.6, right = 0.95, top = 0.85)
+    } else {
+        G1[[r]] <- g1 +
+            ## plot_annotation(tag_levels = titles[r]) +
+            annotation_custom(rectGrob(y = unit(1, 'npc'), x = unit(0, 'npc'), width = unit(1, 'npc'), height = unit(0.15, 'npc'), gp = gpar(col = NA, fill = 'white'))) +
+            annotate_npc(x = 0.02, y = 0.99, label = titles[r], hjust = 0, vjust = 1, gp = gpar(fill = 'white')) +
+            inset_element(g2,
+                          left=left, #convertX(unit(13, 'native'), unitTo='npc'),
+                          bottom = 0.01,#convertX(unit(1, 'native'), unitTo='npc'),
+                          right = 0.95,
+                          top = (top+0.01))
+    }
+
+}
+G[['TFD']]  +
+    G[['TFSR']] + G[['PCO1']] + #ps[[length(ps)]] +
+    plot_layout(ncol = 2) #
+#    plot_annotation(tag_levels = 'a') &
+ #   theme(plot.tag.position=c(0.4,1),
+  #        plot.tag = element_text(vjust = 1, hjust = 1))
+    
+## do.call('wrap_plots', G)
+G1[['TFD']] + G1[['TFSR']] + G1[['PCO1']]  +
+    plot_layout(ncol = 3) #
+
+ggsave(filename=paste0('output/figures/mainFigure.png'),
+       G1[['TFD']] + G1[['TFSR']] + G1[['PCO1']]  +
+       plot_layout(ncol = 3),
+       width=17, height=4, dpi=300)
+ggsave(filename=paste0('output/figures/mainFigure.pdf'),
+       G1[['TFD']] + G1[['TFSR']] + G1[['PCO1']]  +
+       plot_layout(ncol = 3),
+       width=17, height=4, dpi=300)
+ggsave(filename=paste0('output/figures/mainFigure1.png'),
+       G1[['TFD']] + G1[['TFSR']] + G1[['PCO1']]  +
+       plot_layout(ncol = 1),
+       width=8, height=15, dpi=300)
+ggsave(filename=paste0('output/figures/mainFigure1.pdf'),
+       G1[['TFD']] + G1[['TFSR']] + G1[['PCO1']]  +
+       plot_layout(ncol = 1),
+       width=8, height=15, dpi=300)
+## ----end
+
+## ---- MS version of plots
+library(patchwork)
+annotate_npc <- function(label, x, y, ...)
+{
+  ggplot2::annotation_custom(grid::textGrob(
+    x = unit(x, "npc"), y = unit(y, "npc"), label = label, ...))
+}
+mod.name <- "all1"
+load(file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_','TFD','_ABT_short_in.png'))
+g1 <- g + theme(text = element_text(size = 18)) +
+    ## annotate_npc(geom='text', x = 0.1, y = 0.9, label = 'a) Total Density', hjust = 0, vjust = 1)
+    annotate_npc(x = 0.02, y = 0.99, label = 'a) Total Density', hjust = 0, vjust = 1)
+g1
+load(file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_','TFSR','_ABT_short_in.png'))
+g2 <- g + theme(text = element_text(size = 18)) +
+    annotate_npc(x = 0.02, y = 0.99, label = 'b) Total species richness', hjust = 0, vjust = 1)
+load(file = paste0('data/figures/data.all.abt_spatial.',mod.name,'_','PCO1','_ABT_short_in.png'))
+g3 <- g + theme(text = element_text(size = 18)) +
+    annotate_npc(x = 0.02, y = 0.99, label = 'c) PCO1 (species composition)', hjust = 0, vjust = 1)
+    
+g1 + g2 + g3 + plot_layout(ncol = 2) +
+    plot_annotation(tag_levels = 'a') +
+    plot_layout(guides = 'collect')
+## ----end
 
 fish.sub3 = fish.sub1 %>% full_join(fish.sub2) %>% full_join(fish.sub) %>% ungroup
 fish.sub3 = fish.sub3 %>% mutate(SSTMEAN=SSTMEAN-mean(SSTMEAN, na.rm=TRUE))

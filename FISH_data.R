@@ -49,12 +49,17 @@ var.lookup = rbind(
   data.frame(pretty.name='PCO1',  Field.name='PCO1', Abbreviation='PCO1', Family='gaussian', Type='Response', Transform='I', Groupby=''), 
 
   data.frame(pretty.name='Region', Field.name='REGION', Abbreviation='REGION', Family=NA, Type='Predictor', Transform='I', Groupby=''),
-    data.frame(pretty.name='NTR Pooled', Field.name='NTR.Pooled', Abbreviation='NTR.Pooled', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='LHC % (live hard coral cover)', Field.name='LHC_.', Abbreviation='LHC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='SC % (soft coral)', Field.name='SC_.', Abbreviation='SC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='MA % (macroalgal cover)', Field.name='MAC_.', Abbreviation='MA', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='Turf %', Field.name='Turf_.', Abbreviation='TURF', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='Unconsolidated %', Field.name='Unconsolidated_.', Abbreviation='UC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='Zone', Field.name='NTR.Pooled', Abbreviation='NTR.Pooled', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    ## data.frame(pretty.name='LHC % (live hard coral cover)', Field.name='LHC_.', Abbreviation='LHC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='% hard coral', Field.name='LHC_.', Abbreviation='LHC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    ## data.frame(pretty.name='SC % (soft coral)', Field.name='SC_.', Abbreviation='SC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='% soft coral', Field.name='SC_.', Abbreviation='SC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    ## data.frame(pretty.name='MA % (macroalgal cover)', Field.name='MAC_.', Abbreviation='MA', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='% macroalgae', Field.name='MAC_.', Abbreviation='MA', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    ## data.frame(pretty.name='Turf %', Field.name='Turf_.', Abbreviation='TURF', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='% turf', Field.name='Turf_.', Abbreviation='TURF', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    ## data.frame(pretty.name='Unconsolidated %', Field.name='Unconsolidated_.', Abbreviation='UC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='% unconsolidated', Field.name='Unconsolidated_.', Abbreviation='UC', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Benthic richness', Field.name='Benthic.richness', Abbreviation='BR', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Coral morphological diversity', Field.name='Coral_Morph.Diversity', Abbreviation='CMD', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Slope', Field.name='slope', Abbreviation='SLOPE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
@@ -68,7 +73,7 @@ var.lookup = rbind(
     data.frame(pretty.name='Corrected depth', Field.name='Corrected.depth', Abbreviation='DEPTH', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Max DHW', Field.name='maxDHW', Abbreviation='DHW', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Cyclone', Field.name='Cyclone', Abbreviation='CYCLONE', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
-    data.frame(pretty.name='Exposure to primary weeks', Field.name='Exposure.to.primary.weeks', Abbreviation='EXP', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
+    data.frame(pretty.name='High turbidity exposure', Field.name='Exposure.to.primary.weeks', Abbreviation='EXP', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
     data.frame(pretty.name='Prey density', Field.name='Prey.density', Abbreviation='PREY.DENSITY', Family=NA, Type='Predictor', Transform='I', Groupby='Region'),
   data.frame(pretty.name='Prey biomass', Field.name='Prey.biomass', Abbreviation='PREY.BIOMASS', Family=NA, Type='Predictor', Transform='I', Groupby='Region')
 )
@@ -191,11 +196,11 @@ selections %>% glimpse
 ## Predictors
 
 ## ---- EDA.REGION
-EDA_histograms(var='REGION', dat=fish, var.lookup=var.lookup)
+EDA_histograms(var='REGION', group = "REGION", dat=fish, var.lookup=var.lookup)
 ## ----end
 
 ## ---- EDA.NTR.Pooled
-EDA_histograms(var='NTR.Pooled', dat=fish, var.lookup=var.lookup)
+EDA_histograms(var='NTR.Pooled', group="REGION", dat=fish, var.lookup=var.lookup)
 EDA_histograms(var='NTR.Pooled', group='REGION',dat=fish, var.lookup=var.lookup)
 ## ----end
 

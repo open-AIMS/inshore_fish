@@ -697,6 +697,11 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
         trans = as.character(var.lookup[var.lookup$Abbreviation==resp,'Transform'])
         trans = ifelse(trans=='log', 'exp', trans)
         newdata = newdata %>% mutate_at(vars(y,lo,hi), list(trans))
+
+        
+        ## newdata <- newdata %>%
+        ##     mutate(across(any_of(c('NTR.Pooled')),
+        ##                   function(x=.x) ifelse(x=='NTR', 'NTMR', as.character(x))))
         
         if (is.numeric(newdata$X)) {
             ## adjust the predictor to reflect its uncentered values
@@ -722,8 +727,8 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','lightgreen','darkgreen'))     
                 }
                 if (groupby=='NTR.Pooled') {
-                    p[[i]] = p[[i]] + scale_fill_manual(pretty.groupby, values=c('blue','green3')) 
-                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','green3'))   
+                    p[[i]] = p[[i]] + scale_fill_manual(pretty.groupby, values=c('#01b0f1','#92d14f')) 
+                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('#01b0f1','#92d14f'))   
                 }
                 
                 thresholds[[preds[i]]] = newdata %>% group_by_at(groupby) %>%
@@ -764,7 +769,7 @@ plot.abts = function(mod, var.lookup,    center=FALSE, return.grid=TRUE,type='re
                     p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','lightgreen', 'darkgreen')) 
                 }
                 if (groupby=='NTR.Pooled') {
-                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('blue','green3')) 
+                    p[[i]] = p[[i]] + scale_color_manual(pretty.groupby, values=c('#01b0f1','#92d14f')) 
                 }
                 if (groupby=='REGION') {
                     p[[i]] = p[[i]] +

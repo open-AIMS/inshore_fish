@@ -169,11 +169,11 @@ Preparations
 |:------------------------------|:----------------------------|:-------------|
 | Region                        | `REGION`                    | REGION       |
 | NTR Pooled                    | `NTR.Pooled`                | NTR.Pooled   |
-| LHC % (live hard coral cover) | `LHC_.`                     | LHC          |
-| SC % (soft coral)             | `SC_.`                      | SC           |
-| MA % (macroalgal cover)       | `MAC_.`                     | MA           |
-| Turf %                        | `Turf_.`                    | TURF         |
-| Unconsolidated %              | `Unconsolidated_.`          | UC           |
+| % hard cover                  | `LHC_.`                     | LHC          |
+| % soft coral                  | `SC_.`                      | SC           |
+| % macroalgae                  | `MAC_.`                     | MA           |
+| % turf                        | `Turf_.`                    | TURF         |
+| % unconsolidated              | `Unconsolidated_.`          | UC           |
 | Benthic richness              | `Benthic.richness`          | BR           |
 | Coral morphological diversity | `Coral_Morph.Diversity`     | CMD          |
 | Slope                         | `slope`                     | SLOPE        |
@@ -305,6 +305,7 @@ individually.
 
 -->
 
+<!--
 Directions
 ===============
 
@@ -362,6 +363,7 @@ Cheers
 Dani
 ~~~
 
+-->
 
 Results - full analyses {.tabset .tabset-faded}
 ===========
@@ -502,11 +504,13 @@ for (m in unique(stats.all$Model)) {
         ## scale_fill_gradientn('R-squared',colors=rev(heat.colors(10))) +
         scale_fill_manual('Polarity',values=c('red','green')) +
         scale_alpha_continuous('R-squared', limits=c(0,1)) +
-        scale_x_discrete('Responses',position='top') +
-        scale_y_discrete('Predictors') +
-        coord_cartesian(expand=c(0,0)) +
+        scale_x_discrete('Response variables',position='top') +
+        scale_y_discrete('Predictor variables') +
+        coord_cartesian(expand=FALSE) +
         theme_bw() +
-        theme(axis.title=element_text(size=rel(1.5)),
+        theme(
+            text = element_text(size = 18),
+            axis.title=element_text(size=rel(1.5)),
               panel.grid.major = element_blank(),
               legend.position = 'bottom',
               legend.title.align = 0.5,
@@ -515,8 +519,8 @@ for (m in unique(stats.all$Model)) {
         #       alpha=guide_legend(title.position='top'))
     g1    
     
-    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.png'), g1, width=13, height=10, dpi=300)
-    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.pdf'), g1, width=13, height=10)
+    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.png'), g1, width=16, height=10, dpi=300)
+    ggsave(filename=paste0('output/figures/spatial.heatmap_',m,'.pdf'), g1, width=16, height=10)
     cat(paste0('![](output/figures/spatial.heatmap_',m,'.png)\n\n'))
 }
 ```
